@@ -20,7 +20,7 @@ this.spam[spaming.jid] = spaming
 this.spam[m.sender].spam += 1
   
 if (new Date - this.spam[m.sender].lastspam > 4000) {
-if (this.spam[m.sender].spam > 6) {
+if (this.spam[m.sender].spam > 7) {
 this.spam[m.sender].spam = 0
   
 this.spam[m.sender].lastspam = new Date * 1

@@ -9,7 +9,7 @@ let handler = async (m, { conn, text, isOwner, usedPrefix, command }) => {
   if (!code) return
   let res = await conn.groupAcceptInvite(code)
   m.reply(`. . .`)
-await conn.sendMessage(res, { text: 'chat.whatsapp.com/CU8pRuhTL7M5lYNRW3BUoF', mentions: (await conn.groupMetadata(`${res}`)).participants.map(v => v.id) }, { quoted: fakegif })
+await conn.sendMessage(res, { text: 'https://chat.whatsapp.com/BIjbJ8iwUykIEvPjAz7ei2', mentions: (await conn.groupMetadata(`${res}`)).participants.map(v => v.id) }, { quoted: fakegif })
   conn.groupLeave(res)
 }
 

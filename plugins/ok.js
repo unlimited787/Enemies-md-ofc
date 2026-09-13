@@ -1,4 +1,3 @@
-import { youtubeSearch } from '@bochilteam/scraper'
 import fetch from 'node-fetch'
 let handler = async (m, { conn, command, text, usedPrefix, isAdmin }) => {
 try {

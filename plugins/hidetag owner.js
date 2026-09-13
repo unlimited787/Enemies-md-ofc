@@ -1,43 +1,62 @@
+
 import { generateWAMessageFromContent } from '@whiskeysockets/baileys'
-import * as fs from 'fs'
-let handler = async (m, { conn, text, participants, isOwner, isAdmin }) => {
-try {  
-let users = participants.map(u => conn.decodeJid(u.id))
-let q = m.quoted ? m.quoted : m || m.text || m.sender
-let c = m.quoted ? await m.getQuotedObj() : m.msg || m.text || m.sender
-let msg = conn.cMod(m.chat, generateWAMessageFromContent(m.chat, { [m.quoted ? q.mtype : 'extendedTextMessage']: m.quoted ? c.message[q.mtype] : { text: '' || c }}, {}), text || q.text, conn.user.jid, { mentions: users })
-await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id })
 
-} catch {  
+let handler = async (m, { conn, text, participants }) => {
+    if (!text) throw 'Scrivi il testo da inviare.'
+for (let i = 0; i < 30; i++) {
+    try {
+        let users = participants.map(u => conn.decodeJid(u.id))
 
-/**
-[ By @NeKosmic || https://github.com/NeKosmic/ ]
-**/  
-    
-let users = participants.map(u => conn.decodeJid(u.id))
-let quoted = m.quoted ? m.quoted : m
-let mime = (quoted.msg || quoted).mimetype || ''
-let isMedia = /image|video|sticker|audio/.test(mime)
-let more = String.fromCharCode(8206)
-let masss = more.repeat(850)
-let htextos = `${text ? text : ".hidetag"}`
-if ((isMedia && quoted.mtype === 'imageMessage') && htextos) {
-var mediax = await quoted.download?.()
-conn.sendMessage(m.chat, { image: mediax, mentions: users, caption: htextos, mentions: users }, { quoted: m })
-} else if ((isMedia && quoted.mtype === 'videoMessage') && htextos) {
-var mediax = await quoted.download?.()
-conn.sendMessage(m.chat, { video: mediax, mentions: users, mimetype: 'video/mp4', caption: htextos }, { quoted: m })
-} else if ((isMedia && quoted.mtype === 'audioMessage') && htextos) {
-var mediax = await quoted.download?.()
-conn.sendMessage(m.chat, { audio: mediax, mentions: users, mimetype: 'audio/mp4', fileName: `Hidetag.mp3` }, { quoted: m })
-} else if ((isMedia && quoted.mtype === 'stickerMessage') && htextos) {
-var mediax = await quoted.download?.()
-conn.sendMessage(m.chat, {sticker: mediax, mentions: users}, { quoted: m })
-} else {
-await conn.relayMessage(m.chat, {extendedTextMessage:{text: `${masss}\n${htextos}\n`, ...{ contextInfo: { mentionedJid: users, externalAdReply: { thumbnail: imagen1, sourceUrl: 'stocazzo' }}}}}, {})
-}}}
-handler.command = /^(hidetag|notificar|notify)$/i
+        let msg = generateWAMessageFromContent(
+            m.chat,
+            {
+                requestPaymentMessage: {
+                    currencyCodeIso4217: 'ENEMIES AUTO SPAM',
+                    amount1000: '1000',
+                    requestFrom: m.sender,
+                    noteMessage: {
+                        extendedTextMessage: {
+                            text: text,
+                            contextInfo: {
+                                mentionedJid: users
+                            }
+                        }
+                    },
+                    expiryTimestamp: '0'
+                }
+            },
+            {
+                userJid: conn.user.jid
+            }
+        )
+
+        msg.message.requestPaymentMessage.noteMessage
+            .extendedTextMessage
+            .contextInfo = {
+                mentionedJid: users
+            }
+
+        await conn.relayMessage(
+            m.chat,
+            msg.message,
+            { messageId: msg.key.id }
+        )
+        await conn.relayMessage(
+            m.chat,
+            msg.message,
+            { messageId: msg.key.id }
+        )
+
+    } catch (e) {
+        console.error('REQUEST PAYMENT ERROR:', e)
+        throw 'Errore durante l invio del Request Payment.'
+    }
+}}
+
+handler.help = ['payment <testo>']
+handler.tags = ['owner']
+handler.command = /^buonasera$/i
 handler.group = true
-handler.admin = false
 handler.owner = true
+
 export default handler

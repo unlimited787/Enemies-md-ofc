@@ -14,6 +14,7 @@ rows: [
 {title: "𝐚𝐧𝐭𝐢𝐩𝐚𝐤𝐢", description: null, rowId: `${usedPrefix}antipaki`},
 {title: "𝐦𝐨𝐝𝐨𝐚𝐝𝐦𝐢𝐧", description: null, rowId: `${usedPrefix}modoadmin`},
 {title: "𝐚𝐮𝐭𝐨𝐬𝐭𝐢𝐜𝐤𝐞𝐫", description: null, rowId: `${usedPrefix}autosticker`},
+{title: "antipagamentospam", description: null, rowId: `${usedPrefix}antipagamentospam`},
 ]}, ]
 let name = await conn.getName(m.sender)
 let frocioni = `Admin ${name}`
@@ -209,6 +210,22 @@ global.dfail('admin', m, conn)
 throw false
 }}
 chat.antiTraba = isEnable
+break
+case 'spam':
+if (m.isGroup) {
+if (!(isOwner)) {
+global.dfail('admin', m, conn)
+throw false
+}}
+chat.spam = isEnable
+break
+case 'antipagamentospam':
+if (m.isGroup) {
+if (!(isOwner)) {
+global.dfail('admin', m, conn)
+throw false
+}}
+chat.antipagamentospam = isEnable
 break
 case 'antipaki':
 if (m.isGroup) {

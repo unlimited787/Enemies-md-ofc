@@ -32,6 +32,7 @@ let info = `
 │⭔ ${usedPrefix}attiva/disabilita antilink
 │⭔ ${usedPrefix}attiva/disabilita antilinkhard
 │⭔ ${usedPrefix}attiva/disabilita antispam
+│⭔ ${usedPrefix}attiva/disabilita antipagamentospam
 │⭔ ${usedPrefix}attiva/disabilita detect
 │⭔ ${usedPrefix}attiva/disabilita antielimina
 │⭔ ${usedPrefix}attiva/disabilita antiviewonce
@@ -100,12 +101,9 @@ let info = `
 
 ┌──⭓ 𝐒𝐏𝐄𝐂𝐈𝐀𝐋𝐈 💥
 │⭔ ${usedPrefix}gay @
-│⭔ ${usedPrefix}frocio @
 │⭔ ${usedPrefix}lesbica @
 │⭔ ${usedPrefix}puttana @
 │⭔ ${usedPrefix}puttaniere @
-│⭔ ${usedPrefix}nero @
-│⭔ ${usedPrefix}nera @
 │⭔ ${usedPrefix}random @
 │⭔ ${usedPrefix}abbraccio @
 │⭔ ${usedPrefix}amore @
@@ -115,6 +113,7 @@ let info = `
 │⭔ ${usedPrefix}topgays
 │⭔ ${usedPrefix}topnazi
 │⭔ ${usedPrefix}slot
+│⭔ ${usedPrefix}tris (nome stanza)
 │⭔ ${usedPrefix}calc (1+1)
 └───────⭓
 
