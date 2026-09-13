@@ -1,86 +1,77 @@
-import {watchFile, unwatchFile} from 'fs';
-import chalk from 'chalk';
-import {fileURLToPath} from 'url';
-import fs from 'fs'; 
-import cheerio from 'cheerio';
-import fetch from 'node-fetch';
-import axios from 'axios';
-import moment from 'moment-timezone';
+import { watchFile, unwatchFile } from 'fs'
+import { fileURLToPath, pathToFileURL } from 'url'
+import chalk from 'chalk'
+import fs from 'fs'
+import * as cheerio from 'cheerio'
+import fetch from 'node-fetch'
+import axios from 'axios'
+import moment from 'moment-timezone'
+import NodeCache from 'node-cache'
 
+const pkg = JSON.parse(await fs.promises.readFile(new URL('./package.json', import.meta.url), 'utf-8'))
+const moduleCache = new NodeCache({ stdTTL: 300 });
+
+	
+global.gab = ['393312171655',]
 global.owner = [
-  ['393756447945', '𝐄ИΞM𝕀Ξ𝐒 𝐁Ꮻ𝐓', true],
-  ['377607935810'],
-  ['393756447945'],
-  ['393756447945']
-] 
-
-global.suittag = ['393756447945'];
-global.prems = ['393756447945'];
+  ['393312171655', 'Lucifero', true],
+  ['393519500307', 'Gab', true],
+  ['393501680785', 'sop', true],
+]
 
 
-global.packname = '𝐄ИΞM𝕀Ξ𝐒'
-global.author = '𝐁Ꮻ𝐓'
-global.wm = '𝐄ИΞM𝕀Ξ𝐒 𝐁Ꮻ𝐓'
-global.igfg = '𝐄ИΞM𝕀Ξ𝐒 𝐁Ꮻ𝐓'
-global.wait = 'ok'
+global.nomepack = '333'
+global.nomebot = ' ꙰ 𝟥𝟥𝟥 𝔹𝕆𝕋  ꙰'
+global.wm = '333'
+global.autore = 'gab'
+global.dev = 'lucifero'
+global.testobot = `333`
+global.versione = pkg.version
+global.errore = '⚠️ *Errore inatteso!* Usa il comando `.ticket` per avvisare gli owner.'
 
-global.imagen1 = fs.readFileSync('./Menu2.jpg');
-global.imagen2 = fs.readFileSync('./src/nuevobot.jpg');
-global.imagen3 = fs.readFileSync('./src/Pre Bot Publi.png');
-global.imagen4 = fs.readFileSync('./Menu.png');
-global.imagen5 = fs.readFileSync('./src/+18.jpg');
-global.imagen6 = fs.readFileSync('./Menu3.png');
 
-global.mods = [];
+global.repobot = 'https://github.com/GabWT333/Gab333'
+global.canale = 'https://whatsapp.com/channel/0029VauhQviCsU9Ibrwlkb0h'
+global.gruppo = 'https://chat.whatsapp.com/L7Hz1iQpctTDfOoU4LARWL?mode=gi_t' 
 
-//* *******Tiempo***************
-global.d = new Date(new Date + 3600000);
-global.locale = 'es';
-global.dia = d.toLocaleDateString(locale, {weekday: 'long'});
-global.fecha = d.toLocaleDateString('es', {day: 'numeric', month: 'numeric', year: 'numeric'});
-global.mes = d.toLocaleDateString('es', {month: 'long'});
-global.año = d.toLocaleDateString('es', {year: 'numeric'});
-global.tiempo = d.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true});
-//* ****************************
-global.wm2 = `𝐄ИΞM𝕀Ξ𝐒 🛡️⃟🏴‍☠️ 𝐁Ꮻ𝐓`;
-global.gt = '𝐄ИΞM𝕀Ξ𝐒 🛡️⃟🏴‍☠️ 𝐁Ꮻ𝐓';
-global.mysticbot = '𝐄ИΞM𝕀Ξ𝐒 🛡️⃟🏴‍☠️ 𝐁Ꮻ𝐓';
-global.md = 'https://github.com/BrunoSobrino/TheMystic-Bot-MD';
-global.mysticbot = 'https://github.com/BrunoSobrino/TheMystic-Bot-MD';
-global.waitt = 'ok'
-global.waittt = 'ok'
-global.waitttt = 'ok'
-global.nomorown = '393756447945'
-global.pdoc = ['application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/msword', 'application/pdf', 'text/rtf'];
-global.cmenut = '❖––––––『';
-global.cmenub = '┊✦ ';
-global.cmenuf = '╰━═┅═━––––––๑\n';
-global.cmenua = '\n⌕ ❙❘❙❙❘❙❚❙❘❙❙❚❙❘❙❘❙❚❙❘❙❙❚❙❘❙❙❘❙❚❙❘ ⌕\n     ';
-global.dmenut = '*❖─┅──┅〈*';
-global.dmenub = '*┊»*';
-global.dmenub2 = '*┊*';
-global.dmenuf = '*╰┅────────┅✦*';
-global.htjava = '⫹⫺';
-global.htki = '*⭑•̩̩͙⊱•••• ☪*';
-global.htka = '*☪ ••••̩̩͙⊰•⭑*';
-global.comienzo = '• • ◕◕════';
-global.fin = '════◕◕ • •';
-global.botdate = `⫹⫺ Date :  ${moment.tz('America/Los_Angeles').format('DD/MM/YY')}`; // Asia/Jakarta
-global.bottime = `𝗧 𝗜 𝗠 𝗘 : ${moment.tz('America/Los_Angeles').format('HH:mm:ss')}`;// America/Los_Angeles
-global.fgif = {key: {participant: '0@s.whatsapp.net'}, message: {'videoMessage': {'title': wm, 'h': `Hmm`, 'seconds': '999999999', 'gifPlayback': 'true', 'caption': bottime, 'jpegThumbnail': fs.readFileSync('./Menu.png')}}};
-global.multiplier = 99;
-global.flaaa = [
-  'https://flamingtext.com/net-fu/proxy_form.cgi?&imageoutput=true&script=water-logo&script=water-logo&fontsize=90&doScale=true&scaleWidth=800&scaleHeight=500&fontsize=100&fillTextColor=%23000&shadowGlowColor=%23000&backgroundColor=%23000&text=',
-  'https://flamingtext.com/net-fu/proxy_form.cgi?&imageoutput=true&script=crafts-logo&fontsize=90&doScale=true&scaleWidth=800&scaleHeight=500&text=',
-  'https://flamingtext.com/net-fu/proxy_form.cgi?&imageoutput=true&script=amped-logo&doScale=true&scaleWidth=800&scaleHeight=500&text=',
-  'https://www6.flamingtext.com/net-fu/proxy_form.cgi?&imageoutput=true&script=sketch-name&doScale=true&scaleWidth=800&scaleHeight=500&fontsize=100&fillTextType=1&fillTextPattern=Warning!&text=',
-  'https://www6.flamingtext.com/net-fu/proxy_form.cgi?&imageoutput=true&script=sketch-name&doScale=true&scaleWidth=800&scaleHeight=500&fontsize=100&fillTextType=1&fillTextPattern=Warning!&fillColor1Color=%23f2aa4c&fillColor2Color=%23f2aa4c&fillColor3Color=%23f2aa4c&fillColor4Color=%23f2aa4c&fillColor5Color=%23f2aa4c&fillColor6Color=%23f2aa4c&fillColor7Color=%23f2aa4c&fillColor8Color=%23f2aa4c&fillColor9Color=%23f2aa4c&fillColor10Color=%23f2aa4c&fillOutlineColor=%23f2aa4c&fillOutline2Color=%23f2aa4c&backgroundColor=%23101820&text=',
-];
-//* ************************
 
-const file = fileURLToPath(import.meta.url);
-watchFile(file, () => {
-  unwatchFile(file);
-  console.log(chalk.redBright('Update \'config.js\''));
-  import(`${file}?update=${Date.now()}`);
-});
+global.cheerio = cheerio
+global.fs = fs
+global.fetch = fetch
+global.axios = axios
+global.moment = moment
+
+
+global.APIKeys = { 
+    spotifyclientid: '333',
+    spotifysecret: '333',
+    browserless: '333',
+    screenshotone: '333',
+    screenshotone_default: '333',
+    tmdb: '333',
+    gemini:'333',
+    ocrspace: '333',
+    assemblyai: '333',
+    google: '333',
+    googlex: '333',
+    googleCX: '333',
+    genius: '333',
+    unsplash: '333',
+    removebg: 'FEx4CYmYN1QRQWD1mbZp87jV',
+    openrouter: '333',
+    lastfm: '36f859a1fc4121e7f0e931806507d5f9',
+}
+
+
+let filePath = fileURLToPath(import.meta.url)
+let fileUrl = pathToFileURL(filePath).href
+const reloadConfig = async () => {
+  const cached = moduleCache.get(fileUrl);
+  if (cached) return cached;
+  unwatchFile(filePath)
+  console.log(chalk.bgHex('#ff0000')(chalk.white.bold("File: 'config.js' Aggiornato")))
+  const module = await import(`${fileUrl}?update=${Date.now()}`)
+  moduleCache.set(fileUrl, module, { ttl: 300 });
+  return module;
+}
+watchFile(filePath, reloadConfig)
