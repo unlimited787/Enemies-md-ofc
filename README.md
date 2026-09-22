@@ -41,14 +41,6 @@ yarn install --ignore-engines
 ```
 
 ```bash
-npm install
-```
-
-```bash
-npm update
-```
-
-```bash
 sh start.sh
 ```
 
