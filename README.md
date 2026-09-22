@@ -22,6 +22,7 @@ https://www.mediafire.com/file/0npdmv51pnttps0/com.termux_0.119.1-119_minAPI21(a
 ```bash
 cd && termux-setup-storage
 ```
+(e poi acconsenti i permessi di archiviazione)
 
 ```bash
 apt-get update -y && apt-get upgrade -y
@@ -36,7 +37,7 @@ git clone https://github.com/unlimited787/Enemies-md-ofc && cd Enemies-md-ofc
 ```
 
 ```bash
-yarn install
+yarn install --ignore-engines
 ```
 
 ```bash
