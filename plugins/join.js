@@ -197,13 +197,6 @@ let handler = async (m, { conn, text, isOwner }) => {
                 String(global.owner?.[1] || '')
                     .replace(/\D/g, '');
 
-            if (owner) {
-                await conn.reply(
-                    owner + '@s.whatsapp.net',
-                    '❌ JOIN FALLITO\n\n' + cleanError(e),
-                    m
-                );
-            }
         } catch {}
 
         return;
