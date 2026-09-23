@@ -36,7 +36,7 @@
   "scripts": {
     "start": "node index.js",
     "code": "node main.js code",
-    "qr": "node main.js qr",
+    "qr": "node main.js qr"
   },
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
