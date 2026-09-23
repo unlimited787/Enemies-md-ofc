@@ -56,7 +56,7 @@ handler.participantsUpdate = async function ({ id, participants, action }) {
             let text = chat.sWelcome
 
             if (!text) {
-                text = `👋 *Benvenuto/a @${number}!*\n\nBenvenuto/a nel gruppo *${metadata.subject}*`
+                text = `Benvenuto/a @${number} nel gruppo *${metadata.subject}`
             } else {
                 text = text
                     .replace(/@user/g, `@${number}`)
@@ -74,7 +74,7 @@ handler.participantsUpdate = async function ({ id, participants, action }) {
             let text = chat.sBye
 
             if (!text) {
-                text = `👋 *@${number} ha lasciato il gruppo.*`
+                text = `@${number} ha lasciato il gruppo`
             } else {
                 text = text
                     .replace(/@user/g, `@${number}`)
