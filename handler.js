@@ -23,11 +23,11 @@ import NodeCache from 'node-cache';
 /*import {
     getAggregateVotesInPollMessage,
     toJid
-} from '@whiskeysockets/baileys';
+} from '@vkazee/baileys';
 */
 const {
     proto
-} = await import('@whiskeysockets/baileys');
+} = await import('@vkazee/baileys');
 
 
 let _printModule = null;

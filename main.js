@@ -62,7 +62,6 @@ async function joinConfiguredChannel() {
 
 const authFolder = global.authFile || 'EnemiesSessione';
 global.authFile = authFolder;
-global.rcanal = '12036334@newsletter';
 
 const sessionFolder = path.join(process.cwd(), authFolder);
 const tempDir = join(process.cwd(), 'temp');
@@ -160,7 +159,7 @@ const {
     Browsers,
     jidNormalizedUser,
     DisconnectReason
-} = await import('@whiskeysockets/baileys');
+} = await import('@vkazee/baileys');
 
 const {
     chain
