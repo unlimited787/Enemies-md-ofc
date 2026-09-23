@@ -1,4 +1,4 @@
-import { areJidsSameUser } from '@whiskeysockets/baileys'
+import { areJidsSameUser } from '@vkazee/baileys'
 let handler = async (m, { conn, text, participants, args, command }) => {
 let member = participants.map(u => u.id)
 if(!text) {

@@ -3,7 +3,6 @@ let handler  = async (m, { conn, command, args, usedPrefix, DevMode }) => {
 let text = `
 𝐂𝐨𝐦𝐚𝐧𝐝𝐢 𝐩𝐞𝐫 𝐓𝐄𝐑𝐌𝐔𝐗 📱
 
-> cd
 > termux-setup-storage
 > apt update 
 > pkg upgrade 
@@ -14,10 +13,8 @@ let text = `
 > pkg install yarn
 > git clone https://github.com/unlimited787/Enemies-md-ofc
 > cd Enemies-md-ofc
-> yarn install 
-> npm install
-> npm update
-> npm start
+> yarn install
+> yarn start
 `.trim()   
 conn.reply(m.chat, text, m)   
 }

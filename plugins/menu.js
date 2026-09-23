@@ -1,7 +1,7 @@
 import os from 'os'
 import util from 'util'
 import sizeFormatter from 'human-readable'
-import MessageType from '@whiskeysockets/baileys'
+import MessageType from '@vkazee/baileys'
 import fs from 'fs'
 import { performance } from 'perf_hooks'
 let handler = async (m, { conn, usedPrefix }) => {
@@ -19,7 +19,7 @@ let neww = performance.now()
 let speed = neww - old
 let info = `
 
-✦✧ 𝐄ИΞM𝕀Ξ𝐒 𝐁Ꮻ𝐓 2.0 BETA 1 ✧✦
+✦✧ 𝐄ИΞM𝕀Ξ𝐒 𝐁Ꮻ𝐓 2.0 BETA1.1 ✧✦
 
 ┌──⭓ 𝐆𝐑𝐔𝐏𝐏𝐎 🛡
 │⭔ ${usedPrefix}kick / addio / ban @
@@ -33,8 +33,8 @@ let info = `
 │⭔ ${usedPrefix}tagall (txt)
 │⭔ ${usedPrefix}inattivi
 │⭔ ${usedPrefix}viainattivi
-│⭔ ${usedPrefix}promuovi / mettiadmin @ ⚠️
-│⭔ ${usedPrefix}retrocedi / togliadmin @⚠️
+│⭔ ${usedPrefix}promuovi / mettiadmin @ 
+│⭔ ${usedPrefix}retrocedi / togliadmin @
 │⭔ ${usedPrefix}muta / smuta @⚠️
 │⭔ ${usedPrefix}aperto / chiuso
 │⭔ ${usedPrefix}nome (txt)
@@ -47,10 +47,12 @@ let info = `
 
 ✦✧ ═ •⊰❂⊱• ═ ✧✦
 
-┌──⭓ * ${usedPrefix}ATTIVA/DISABILITA *
+┌──⭓ ${usedPrefix}𝐀𝐓𝐓𝐈𝐕𝐀/𝐃𝐈𝐒𝐀𝐁𝐈𝐋𝐈𝐓𝐀 
 │⭔ benvenuto
 │⭔ antilink
 │⭔ antilinkhard
+│⭔ antilinkgc 
+│⭔ antilinkgp
 │⭔ antispam⚠️
 │⭔ antipagamentospam
 │⭔ detect⚠️

@@ -1,4 +1,4 @@
-import baileys from '@whiskeysockets/baileys'
+import baileys from '@vkazee/baileys'
 
 let handler = async (m, { conn, participants }) => {
 
