@@ -1,4 +1,4 @@
-import { jidNormalizedUser } from '@whiskeysockets/baileys'
+import { jidNormalizedUser } from '@vkazee/baileys'
 
 const handler = async (m, { conn, participants, usedPrefix, command, isAdmin }) => {
   if (!m.mentionedJid[0] && !m.quoted) return

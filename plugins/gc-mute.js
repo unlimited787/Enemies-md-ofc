@@ -1,4 +1,4 @@
-import { jidNormalizedUser } from '@whiskeysockets/baileys'
+import { jidNormalizedUser } from '@vkazee/baileys'
 
 const handler = async (m, { conn, participants }) => {
 

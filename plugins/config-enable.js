@@ -14,7 +14,7 @@ rows: [
 {title: "𝐚𝐧𝐭𝐢𝐩𝐚𝐤𝐢", description: null, rowId: `${usedPrefix}antipaki`},
 {title: "𝐦𝐨𝐝𝐨𝐚𝐝𝐦𝐢𝐧", description: null, rowId: `${usedPrefix}modoadmin`},
 {title: "𝐚𝐮𝐭𝐨𝐬𝐭𝐢𝐜𝐤𝐞𝐫", description: null, rowId: `${usedPrefix}autosticker`},
-{title: "antipagamentospam", description: null, rowId: `${usedPrefix}antipagamentospam`},
+{title: "𝐚𝐧𝐭𝐢𝐩𝐚𝐠𝐚𝐦𝐞𝐧𝐭𝐨𝐬𝐩𝐚𝐦", description: null, rowId: `${usedPrefix}antipagamentospam`},
 ]}, ]
 let name = await conn.getName(m.sender)
 let frocioni = `Admin ${name}`

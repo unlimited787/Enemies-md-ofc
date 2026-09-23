@@ -1,7 +1,7 @@
 import {
   proto,
   generateWAMessageFromContent
-} from '@whiskeysockets/baileys'
+} from '@vkazee/baileys'
 
 let handler = async (m, { conn }) => {
   if (!m.quoted) {

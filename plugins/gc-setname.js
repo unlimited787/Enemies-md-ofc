@@ -1,4 +1,4 @@
-import Presence from '@whiskeysockets/baileys'
+import Presence from '@vkazee/baileys'
 let handler  = async (m, { conn, args, text }) => {
 if (!text) return
 try {

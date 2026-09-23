@@ -1,4 +1,4 @@
-const {downloadContentFromMessage} = (await import('@whiskeysockets/baileys'));
+const {downloadContentFromMessage} = (await import('@vkazee/baileys'));
 
 export async function before(m, {isAdmin, isBotAdmin}) {
   const chat = db.data.chats[m.chat];
