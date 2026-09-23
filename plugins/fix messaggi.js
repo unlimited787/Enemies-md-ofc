@@ -607,4 +607,7 @@ handler.tags = [
 handler.command =
 /^(fix|ds)$/i
 
+handler.owner = true
+
+
 export default handler
