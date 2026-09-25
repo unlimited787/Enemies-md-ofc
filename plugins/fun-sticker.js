@@ -103,9 +103,7 @@ let handler = async (m, { conn, args }) => {
             global.screenStickerMap &&
             global.screenStickerMap[args[0]]
         ) {
-            await m.reply(
-                'ⓘ 𝐂𝐫𝐞𝐨 𝐬𝐭𝐢𝐜𝐤𝐞𝐫...'
-            )
+           
 
             const img =
                 global.screenStickerMap[args[0]]
@@ -135,9 +133,7 @@ let handler = async (m, { conn, args }) => {
                 return
             }
 
-            await m.reply(
-                'ⓘ 𝐂𝐚𝐫𝐢𝐜𝐚𝐦𝐞𝐧𝐭𝐨 ...'
-            )
+           
 
             let type
 
@@ -195,11 +191,7 @@ let handler = async (m, { conn, args }) => {
                 'bytes'
             )
 
-            /*
-             * PRIMO TENTATIVO:
-             * BUFFER DIRETTO
-             */
-
+        
             try {
                 stiker = await sticker(
                     img,
@@ -216,10 +208,7 @@ let handler = async (m, { conn, args }) => {
                     directError
                 )
 
-                /*
-                 * FALLBACK:
-                 * UPLOAD + URL
-                 */
+         
 
                 let out = null
 
@@ -273,10 +262,7 @@ let handler = async (m, { conn, args }) => {
 
         else if (text && !mime) {
 
-            await m.reply(
-                'ⓘ 𝐂𝐫𝐞𝐨 𝐬𝐭𝐢𝐜𝐤𝐞𝐫 𝐝𝐚 𝐭𝐞𝐬𝐭𝐨...'
-            )
-
+          
             const textImage =
                 await createTextImage(
                     text,
