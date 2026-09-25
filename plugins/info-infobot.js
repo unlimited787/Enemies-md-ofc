@@ -32,7 +32,7 @@ let speed = (neww - old).toFixed(4)
 let info = `
 🛡️⃟🏴‍☠️ ══ •⊰❂⊱• ══ 🛡️⃟🏴‍☠️
 
-𝐏𝐈𝐍𝐆 🛡️⃟🏴‍☠️ 𝐁Ꮻ𝐓
+𝐄ИΞM𝕀Ξ𝐒 𝐁Ꮻ𝐓 𝐑Ξ𝐒𝐔𝐑𝐑Ξ𝐂𝐓𝕀Ꮻ𝐍
 𝐀𝐓𝐓𝐈𝐕𝐈𝐓𝐀': ${runtime(process.uptime())}
 𝐕𝐄𝐋𝐎𝐂𝐈𝐓𝐀': ${speed} 𝐬𝐞𝐜𝐨𝐧𝐝𝐢
 
