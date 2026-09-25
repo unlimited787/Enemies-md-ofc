@@ -112,7 +112,11 @@ function normalizza(testo) {
 
 function creaMaschera(parola, lettere) {
     return [...parola]
-        .map(lettera => lettere.has(lettera) ? lettera.toUpperCase() : '⬜')
+        .map(lettera =>
+            lettere.has(lettera)
+                ? lettera.toUpperCase()
+                : '⬜'
+        )
         .join(' ')
 }
 
@@ -134,9 +138,74 @@ function statoPartita(partita) {
         `${partita.usate.length
             ? partita.usate.map(x => x.toUpperCase()).join(', ')
             : 'Nessuna'}\n\n` +
-        `👉 Rispondi *citando questo messaggio* con una lettera.\n` +
+        `👉 Rispondi citando questo messaggio con una lettera.\n` +
         `💡 Puoi anche provare direttamente la parola.`
     )
+}
+
+/*
+ * Cancella i vecchi messaggi inviati dal bot
+ * relativi a questa partita.
+ */
+async function eliminaVecchiMessaggi(conn, chat, partita) {
+    const vecchi = [...partita.messageKeys]
+
+    partita.messageKeys.clear()
+
+    for (const key of vecchi) {
+        try {
+            if (!key?.id) continue
+
+            await conn.sendMessage(chat, {
+                delete: key
+            })
+        } catch (e) {
+            // Se un messaggio non può essere eliminato,
+            // il gioco continua comunque.
+        }
+    }
+}
+
+/*
+ * Invia il nuovo messaggio dell'Impiccato,
+ * salva la sua key e poi elimina i precedenti.
+ */
+async function replyGioco(conn, chat, testo, quoted, partita) {
+
+    const vecchieKeys = [...partita.messageKeys]
+
+    const sent = await conn.reply(
+        chat,
+        testo,
+        quoted
+    )
+
+    /*
+     * Il nuovo messaggio diventa l'unico
+     * messaggio attivo dell'Impiccato.
+     */
+    partita.messageKeys.clear()
+
+    if (sent?.key?.id) {
+        partita.messageKeys.add(sent.key)
+    }
+
+    /*
+     * Ora eliminiamo i messaggi precedenti.
+     */
+    for (const key of vecchieKeys) {
+        try {
+            if (!key?.id) continue
+
+            await conn.sendMessage(chat, {
+                delete: key
+            })
+        } catch (e) {
+            // Ignora eventuali errori di cancellazione.
+        }
+    }
+
+    return sent
 }
 
 let handler = async (m, { conn }) => {
@@ -145,11 +214,13 @@ let handler = async (m, { conn }) => {
     if (partite.has(chat)) {
         const partita = partite.get(chat)
 
-        return conn.reply(
+        return replyGioco(
+            conn,
             chat,
             `⚠️ *C'È GIÀ UNA PARTITA IN CORSO!*\n\n` +
             statoPartita(partita),
-            m
+            m,
+            partita
         )
     }
 
@@ -171,14 +242,18 @@ let handler = async (m, { conn }) => {
         usate: [],
         errori: [],
         startedBy: m.sender,
-        messageId: null
+
+        /*
+         * Conserviamo le key dei messaggi
+         * prodotti dal gioco.
+         */
+        messageKeys: new Set()
     }
 
-    /*
-     * Mandiamo il messaggio iniziale e salviamo
-     * l'ID del messaggio.
-     */
-    const sent = await conn.reply(
+    partite.set(chat, partita)
+
+    await replyGioco(
+        conn,
         chat,
         `🎮 *NUOVA PARTITA: IMPICCATO!*\n\n` +
         `Indovina la parola!\n\n` +
@@ -187,17 +262,9 @@ let handler = async (m, { conn }) => {
         `👉 Per giocare devi *rispondere citando questo messaggio*.\n` +
         `🔤 Invia una lettera alla volta.\n` +
         `💡 Oppure prova direttamente a indovinare la parola!`,
-        m
+        m,
+        partita
     )
-
-    /*
-     * Salviamo l'ID del messaggio dell'impiccato.
-     */
-    if (sent?.key?.id) {
-        partita.messageId = sent.key.id
-    }
-
-    partite.set(chat, partita)
 }
 
 handler.before = async function (m, { conn }) {
@@ -209,13 +276,8 @@ handler.before = async function (m, { conn }) {
     if (!partita) return
 
     /*
-     * IMPORTANTE:
-     *
-     * Il messaggio viene considerato un tentativo
-     * SOLO se è una risposta QUOTATA al messaggio
-     * originale dell'Impiccato.
+     * Deve essere un messaggio quotato.
      */
-
     if (!m.quoted) return
 
     const quotedId =
@@ -224,7 +286,20 @@ handler.before = async function (m, { conn }) {
 
     if (!quotedId) return
 
-    if (quotedId !== partita.messageId) return
+    /*
+     * Recuperiamo l'ID dell'unico messaggio
+     * attualmente attivo.
+     */
+    let messaggioValido = false
+
+    for (const key of partita.messageKeys) {
+        if (key?.id === quotedId) {
+            messaggioValido = true
+            break
+        }
+    }
+
+    if (!messaggioValido) return
 
     if (typeof m.text !== 'string') return
 
@@ -241,40 +316,49 @@ handler.before = async function (m, { conn }) {
      */
 
     if (input.length > 1) {
+
         if (input === partita.parola) {
+
             partite.delete(chat)
 
-            return conn.reply(
+            return replyGioco(
+                conn,
                 chat,
                 `🎉 *HAI VINTO!*\n\n` +
                 `🏆 La parola era:\n` +
                 `*${partita.parola.toUpperCase()}*\n\n` +
                 `👏 Complimenti!`,
-                m
+                m,
+                partita
             )
         }
 
         partita.errori.push(input)
 
         if (partita.errori.length >= MAX_ERRORI) {
+
             partite.delete(chat)
 
-            return conn.reply(
+            return replyGioco(
+                conn,
                 chat,
                 `💀 *SEI STATO IMPICCATO!*\n\n` +
                 `❌ Hai esaurito i tentativi.\n\n` +
                 `✅ La parola era:\n` +
                 `*${partita.parola.toUpperCase()}*`,
-                m
+                m,
+                partita
             )
         }
 
-        return conn.reply(
+        return replyGioco(
+            conn,
             chat,
             `❌ *PAROLA SBAGLIATA!*\n\n` +
             `Hai ancora *${MAX_ERRORI - partita.errori.length} errori* disponibili.\n\n` +
             statoPartita(partita),
-            m
+            m,
+            partita
         )
     }
 
@@ -287,11 +371,14 @@ handler.before = async function (m, { conn }) {
     if (!/^[a-z]$/.test(lettera)) return
 
     if (partita.usate.includes(lettera)) {
-        return conn.reply(
+
+        return replyGioco(
+            conn,
             chat,
             `⚠️ La lettera *${lettera.toUpperCase()}* è già stata usata!\n\n` +
             statoPartita(partita),
-            m
+            m,
+            partita
         )
     }
 
@@ -302,28 +389,34 @@ handler.before = async function (m, { conn }) {
      */
 
     if (partita.parola.includes(lettera)) {
+
         partita.lettere.add(lettera)
 
         const completata = [...partita.parola]
             .every(x => partita.lettere.has(x))
 
         if (completata) {
+
             partite.delete(chat)
 
-            return conn.reply(
+            return replyGioco(
+                conn,
                 chat,
                 `🎉 *PAROLA COMPLETATA!*\n\n` +
                 `🏆 *${partita.parola.toUpperCase()}*\n\n` +
                 `👏 Complimenti, hai vinto!`,
-                m
+                m,
+                partita
             )
         }
 
-        return conn.reply(
+        return replyGioco(
+            conn,
             chat,
             `✅ *LETTERA CORRETTA!*\n\n` +
             statoPartita(partita),
-            m
+            m,
+            partita
         )
     }
 
@@ -334,23 +427,28 @@ handler.before = async function (m, { conn }) {
     partita.errori.push(lettera)
 
     if (partita.errori.length >= MAX_ERRORI) {
+
         partite.delete(chat)
 
-        return conn.reply(
+        return replyGioco(
+            conn,
             chat,
             `💀 *GAME OVER!*\n\n` +
             `Hai esaurito i tentativi.\n\n` +
             `✅ La parola era:\n` +
             `*${partita.parola.toUpperCase()}*`,
-            m
+            m,
+            partita
         )
     }
 
-    return conn.reply(
+    return replyGioco(
+        conn,
         chat,
         `❌ La lettera *${lettera.toUpperCase()}* non c'è!\n\n` +
         statoPartita(partita),
-        m
+        m,
+        partita
     )
 }
 
