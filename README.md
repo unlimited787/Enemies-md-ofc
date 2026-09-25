@@ -33,7 +33,7 @@ pkg install -y git nodejs ffmpeg imagemagick && pkg install yarn && pkg install 
 ```
 
 ```bash
-pkg update
+python -m pip install -U "yt-dlp[default]"
 ```
 
 ```bash
