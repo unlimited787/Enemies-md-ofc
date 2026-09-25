@@ -119,6 +119,7 @@ let info = `
 │⭔ ${usedPrefix}topnazi
 │⭔ ${usedPrefix}slot
 │⭔ ${usedPrefix}tris (nome stanza)
+│⭔ ${usedPrefix}quiz
 │⭔ ${usedPrefix}calc (1+1)
 └───────⭓
 
