@@ -11,13 +11,13 @@ function loadFonts() {
   if (fontsLoaded) return
 
   const regularFonts = [
-    '/system/fonts/Roboto-Regular.ttf',
-    '/system/fonts/Roboto.ttf'
+    '/system/fonts/DejaVuSans.ttf',
+    '/system/fonts/DejaVuSans.ttf'
   ]
 
   const boldFonts = [
-    '/system/fonts/Roboto-Bold.ttf',
-    '/system/fonts/Roboto-Medium.ttf'
+    '/system/fonts/DejaVuSans.ttf',
+    '/system/fonts/DejaVuSans.ttf'
   ]
 
   const regular = regularFonts.find(f => fs.existsSync(f))
@@ -33,7 +33,7 @@ function loadFonts() {
 
   if (bold) {
     try {
-      PImage.registerFont(bold, 'Roboto Bold').loadSync()
+      PImage.registerFont(bold, 'DejaVuSans').loadSync()
     } catch (e) {
       console.error('[lastfm-card] Errore font bold:', e.message)
     }
