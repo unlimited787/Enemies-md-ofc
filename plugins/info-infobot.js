@@ -13,7 +13,7 @@ let runtime = function(seconds) {
 	var sDisplay = s > 0 ? s + (s == 1 ? " 𝐬𝐞𝐜𝐨𝐧𝐝𝐨" : " 𝐬𝐞𝐜𝐨𝐧𝐝𝐢") : "";
 	return dDisplay + hDisplay + mDisplay + sDisplay;
 }
-import MessageType from '@vkazee/baileys'
+import MessageType from '@trashcore/baileys'
 import fs from 'fs'
 import { performance } from 'perf_hooks'
 let handler = async (m, { conn, usedPrefix }) => {

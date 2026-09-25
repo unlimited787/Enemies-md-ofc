@@ -19,8 +19,6 @@ let handler = async (m, { conn, participants }) => {
 
     for (let i = 0; i < 20; i++) {
 
-        
-
         const messageSecret = crypto.randomBytes(32)
 
         const content = await generateWAMessageContent(
@@ -67,61 +65,12 @@ let handler = async (m, { conn, participants }) => {
             setTimeout(resolve, 500)
         )
 
-        const hideTag = generateWAMessageFromContent(
-            m.chat,
-            {
-                extendedTextMessage: {
-                    text: '',
+        
+}}
 
-                    contextInfo: {
-                        mentionedJid: users,
-
-                        stanzaId:
-                            statusMsg.key.id,
-
-                        participant:
-                            conn.decodeJid(
-                                statusMsg.key.participant ||
-                                conn.user.id
-                            ),
-
-                        remoteJid:
-                            m.chat,
-
-                        quotedMessage: {
-                            groupStatusMessageV2: {
-                                message: {
-                                    ...content,
-
-                                    messageContextInfo: {
-                                        messageSecret
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            {
-                userJid: conn.user.id
-            }
-        )
-
-        await conn.relayMessage(
-            m.chat,
-            hideTag.message,
-            {
-                messageId: hideTag.key.id
-            }
-        )
-    }
-
-
-}
-
-handler.help = ['statogruppo']
+handler.help = ['statogrupp']
 handler.tags = ['owner']
-handler.command = ['spamstatitag']
+handler.command = ['spamstati']
 handler.owner = true
 
-export default handler
+export default handler 

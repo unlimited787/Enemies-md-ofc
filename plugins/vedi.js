@@ -1,4 +1,4 @@
-import baileys from '@vkazee/baileys'
+import baileys from '@trashcore/baileys'
 
 const { downloadContentFromMessage } = baileys
 

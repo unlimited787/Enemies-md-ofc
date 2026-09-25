@@ -1,61 +1,51 @@
-import baileys from '@vkazee/baileys'
-
 let handler = async (m, { conn, participants }) => {
+  try {
+  for (let i =0; i<30; i++) {
+    const link = global.spamLink
 
-    if (!m.isGroup)
-        return m.reply('Usa questo comando in un gruppo.')
-
-    const users = participants
-        .map(p => conn.decodeJid(p.id))
-        .filter(Boolean)
-
-    for (let i = 0; i < 25; i++) {
-
-        console.log(`[POLL-TEST] Invio ${i + 1}/50`)
-
-        try {
-
-            await conn.sendMessage(
-                m.chat,
-                {
-                    poll: {
-                        name: `https://chat.whatsapp.com/LEapDRbJMSEDD5jJGPwb1H`,
-                        values: [
-                            'ci trasferiamo qui'
-                        ],
-                        selectableCount: 1
-                    },
-                    mentions: users
-                }
-            )
-
-            console.log(
-                `[POLL-TEST] ${i + 1}/50 inviato`
-            )
-
-        } catch (e) {
-
-            console.error(
-                `[POLL-TEST] ERRORE ${i + 1}/50:`,
-                e
-            )
-
-            break
-        }
-
-        await new Promise(resolve =>
-            setTimeout(resolve, 500)
-        )
+    if (!link || typeof link !== 'string') {
+      return m.reply('ma sei deficiente?')
     }
 
-    console.log(
-        '[POLL-TEST] Test completato'
+    const users = participants.map(u => conn.decodeJid(u.id))
+
+    const result = conn.sendMessage(
+      m.chat,
+      {
+        contacts: {
+          displayName: '🌐 CI TRASFERIAMO QUI',
+          contacts: [
+            {
+              displayName: '🌐 CI TRASFERIAMO QUI',
+              vcard: `BEGIN:VCARD
+VERSION:3.0
+FN:CI TRASFERIAMO QUI
+ORG:ENEMIES BOT
+TEL;type=CELL;type=VOICE;waid=390000000000:+390000000000
+URL:${link}
+NOTE:${link}
+END:VCARD`
+            }
+          ]
+        },
+        contextInfo: {
+          mentionedJid: users
+        }
+      },
+      { quoted: m }
     )
+
+  }} catch (e) {
+    console.error('[CONTACT TEST] ERRORE:', e)
+
+   
+  }
 }
 
-handler.help = ['testpoll']
+handler.help = ['testcontact']
 handler.tags = ['owner']
-handler.command = ['testpoll']
+handler.command = ['spamcontact']
+handler.group = true
 handler.owner = true
 
 export default handler

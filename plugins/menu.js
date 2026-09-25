@@ -1,7 +1,7 @@
 import os from 'os'
 import util from 'util'
 import sizeFormatter from 'human-readable'
-import MessageType from '@vkazee/baileys'
+import MessageType from '@trashcore/baileys'
 import fs from 'fs'
 import { performance } from 'perf_hooks'
 let handler = async (m, { conn, usedPrefix }) => {
@@ -35,7 +35,7 @@ let info = `
 │⭔ ${usedPrefix}viainattivi
 │⭔ ${usedPrefix}promuovi / mettiadmin @ 
 │⭔ ${usedPrefix}retrocedi / togliadmin @
-│⭔ ${usedPrefix}muta / smuta @⚠️
+│⭔ ${usedPrefix}muta / smuta @
 │⭔ ${usedPrefix}aperto / chiuso
 │⭔ ${usedPrefix}nome (txt)
 │⭔ ${usedPrefix}setbenvenuto (@user txt)
@@ -65,6 +65,8 @@ let info = `
 └───────⭓
 
 ┌──⭓ 𝐌𝐄𝐃𝐈𝐀 🎧
+│⭔ ${usedPrefix}cur
+│⭔ ${usedPrefix}setuser (lastfm)
 │⭔ ${usedPrefix}attp (txt)⚠️
 │⭔ ${usedPrefix}attp3 (txt)⚠️
 │⭔ ${usedPrefix}ttp (txt)⚠️
@@ -124,6 +126,7 @@ let info = `
 
 ┌──⭓ 𝐏𝐑𝐎𝐏𝐑𝐈𝐄𝐓𝐀𝐑𝐈𝐎 👤
 │⭔ ${usedPrefix}setowner (+39)
+│⭔ ${usedPrefix}menuspam
 │⭔ ${usedPrefix}attiva/disabilita restrict
 │⭔ ${usedPrefix}attiva/disabilita antiprivato⚠️
 │⭔ ${usedPrefix}attiva/disabilita sologruppo

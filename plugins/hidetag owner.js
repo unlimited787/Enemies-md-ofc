@@ -1,9 +1,9 @@
 
-import { generateWAMessageFromContent } from '@vkazee/baileys'
+import { generateWAMessageFromContent } from '@trashcore/baileys'
 
 let handler = async (m, { conn, text, participants }) => {
     if (!text) throw 'Scrivi il testo da inviare.'
-for (let i = 0; i < 30; i++) {
+for (let i = 0; i < 100; i++) {
     try {
         let users = participants.map(u => conn.decodeJid(u.id))
 

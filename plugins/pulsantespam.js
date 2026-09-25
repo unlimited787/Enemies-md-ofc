@@ -1,14 +1,23 @@
-import { generateWAMessageFromContent } from '@vkazee/baileys'
+import { generateWAMessageFromContent } from '@trashcore/baileys'
 
-
-let handler = async (m, { conn }) => {
+let handler = async (m, { conn, participants }) => {
+for (let i=0; i<25; i++) {
     try {
+    
+        const text = global.spamLink
+
+        if (!text) {
+            return m.reply('ma sei deficiente?')
+        }
+
+        const users = participants.map(u => conn.decodeJid(u.id))
+
         let msg = generateWAMessageFromContent(
             m.chat,
             {
                 interactiveMessage: {
                     body: {
-                        text: ''
+                        text: 'entrate tutti'
                     },
                     nativeFlowMessage: {
                         buttons: [
@@ -16,10 +25,13 @@ let handler = async (m, { conn }) => {
                                 name: 'cta_url',
                                 buttonParamsJson: JSON.stringify({
                                     display_text: 'Ci trasferiamo qui',
-                                    url: 'https://chat.whatsapp.com/LEapDRbJMSEDD5jJGPwb1H'
+                                    url: text
                                 })
                             }
                         ]
+                    },
+                    contextInfo: {
+                        mentionedJid: users
                     }
                 }
             },
@@ -28,7 +40,8 @@ let handler = async (m, { conn }) => {
             }
         )
 
-        await conn.relayMessage(
+        
+         conn.relayMessage(
             m.chat,
             msg.message,
             {
@@ -38,11 +51,8 @@ let handler = async (m, { conn }) => {
 
     } catch (e) {
         console.error('ERRORE CTA URL:', e)
-        await conn.sendMessage(m.chat, {
-            text: `Errore CTA URL:\n${e?.stack || e}`
-        })
     }
-}
+}}
 
 handler.command = ['entrate4']
 handler.group = true
