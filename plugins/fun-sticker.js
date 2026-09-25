@@ -92,11 +92,9 @@ let handler = async (m, { conn, args }) => {
             'Utente'
 
         const packname = senderName
-        const author = '333 bot'
+        const author = '𝐄ИΞM𝕀Ξ𝐒 𝐁Ꮻ𝐓'
 
-        /*
-         * SCREEN STICKER
-         */
+     
 
         if (
             args[0] &&
