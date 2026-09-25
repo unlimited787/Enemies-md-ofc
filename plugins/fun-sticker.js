@@ -64,7 +64,7 @@ const createTextImage = async (text, packname, author) => {
         return canvas.toBuffer('image/png')
 
     } catch (e) {
-        console.error('Errore canvas:', e)
+        console.error('Errore canvas:', e?.stack || e)
         return null
     }
 }
@@ -103,9 +103,12 @@ let handler = async (m, { conn, args }) => {
             global.screenStickerMap &&
             global.screenStickerMap[args[0]]
         ) {
-            await m.reply('ⓘ 𝐂𝐫𝐞𝐨 𝐬𝐭𝐢𝐜𝐤𝐞𝐫...')
+            await m.reply(
+                'ⓘ 𝐂𝐫𝐞𝐨 𝐬𝐭𝐢𝐜𝐤𝐞𝐫...'
+            )
 
-            const img = global.screenStickerMap[args[0]]
+            const img =
+                global.screenStickerMap[args[0]]
 
             delete global.screenStickerMap[args[0]]
 
@@ -123,36 +126,78 @@ let handler = async (m, { conn, args }) => {
 
         else if (/webp|image|video/i.test(mime)) {
 
+            const msg = q.msg || q
+
             if (
                 /video/i.test(mime) &&
-                (q.msg || q).seconds > 9
+                msg.seconds > 9
             ) {
                 return
             }
 
-            await m.reply('ⓘ 𝐂𝐚𝐫𝐢𝐜𝐚𝐦𝐞𝐧𝐭𝐨 ...')
+            await m.reply(
+                'ⓘ 𝐂𝐚𝐫𝐢𝐜𝐚𝐦𝐞𝐧𝐭𝐨 ...'
+            )
+
+            let type
+
+            if (/image/i.test(mime)) {
+                type = 'image'
+            } else if (/video/i.test(mime)) {
+                type = 'video'
+            } else if (/webp/i.test(mime)) {
+                type = 'sticker'
+            }
+
+            console.log(
+                'STICKER DOWNLOAD:',
+                {
+                    mime,
+                    type,
+                    hasMsg: !!msg,
+                    hasUrl: !!msg?.url,
+                    hasDirectPath: !!msg?.directPath
+                }
+            )
+
+            /*
+             * DOWNLOAD CON IL SISTEMA DEL TUO BOT
+             */
 
             let img
 
-try {
-    img = await q.download()
-} catch (e) {
-    console.error('q.download() ERROR:', e)
-}
+            try {
+                img = await conn.downloadM(
+                    msg,
+                    type,
+                    false
+                )
+            } catch (e) {
+                console.error(
+                    'conn.downloadM ERROR:',
+                    e?.stack || e
+                )
+            }
 
-console.log('STICKER DOWNLOAD:', {
-    exists: !!img,
-    type: typeof img,
-    isBuffer: Buffer.isBuffer(img),
-    size: Buffer.isBuffer(img) ? img.length : null,
-    mime
-})
+            if (
+                !img ||
+                !Buffer.isBuffer(img) ||
+                !img.length
+            ) {
+                throw new Error(
+                    'Impossibile scaricare il media con conn.downloadM'
+                )
+            }
 
-if (!img) {
-    throw new Error('q.download() non ha restituito il media')
-}
+            console.log(
+                'STICKER MEDIA SCARICATO:',
+                img.length,
+                'bytes'
+            )
+
             /*
-             * Prima prova direttamente con Buffer
+             * PRIMO TENTATIVO:
+             * BUFFER DIRETTO
              */
 
             try {
@@ -162,30 +207,49 @@ if (!img) {
                     packname,
                     author
                 )
+
             } catch (directError) {
 
                 console.error(
                     'Sticker diretto fallito:',
+                    directError?.stack ||
                     directError
                 )
 
                 /*
-                 * Fallback tramite URL
+                 * FALLBACK:
+                 * UPLOAD + URL
                  */
 
                 let out = null
 
-                if (/image|webp/i.test(mime)) {
-                    out = await uploadImage(img)
-                } else if (/video/i.test(mime)) {
-                    out = await uploadFile(img)
+                try {
+                    if (/image|webp/i.test(mime)) {
+                        out = await uploadImage(img)
+                    } else if (/video/i.test(mime)) {
+                        out = await uploadFile(img)
+                    }
+                } catch (uploadError) {
+                    console.error(
+                        'Upload fallito:',
+                        uploadError?.stack ||
+                        uploadError
+                    )
                 }
 
                 if (
                     typeof out !== 'string' ||
                     !out
                 ) {
-                    out = await uploadImage(img)
+                    try {
+                        out = await uploadImage(img)
+                    } catch (uploadError) {
+                        console.error(
+                            'UploadImage fallback fallito:',
+                            uploadError?.stack ||
+                            uploadError
+                        )
+                    }
                 }
 
                 if (!out) {
@@ -260,11 +324,10 @@ if (!img) {
             'ERRORE STICKER:',
             e?.stack || e
         )
-
     }
 
     /*
-     * INVIO
+     * INVIO STICKER
      */
 
     if (!stiker) {
@@ -287,7 +350,7 @@ if (!img) {
     } catch (e) {
 
         console.error(
-            'Errore invio sticker:',
+            'ERRORE INVIO STICKER:',
             e?.stack || e
         )
     }
