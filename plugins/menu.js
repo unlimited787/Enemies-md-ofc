@@ -121,6 +121,7 @@ let info = `
 │⭔ ${usedPrefix}tris (nome stanza)
 │⭔ ${usedPrefix}quiz
 │⭔ ${usedPrefix}bandiera
+│⭔ ${usedPrefix}impiccato
 │⭔ ${usedPrefix}calc (1+1)
 └───────⭓
 
