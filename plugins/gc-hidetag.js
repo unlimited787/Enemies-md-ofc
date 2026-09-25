@@ -149,7 +149,7 @@ let handler = async (m, { conn, text, participants }) => {
     }
 }
 
-handler.command = /^(hidetag|notificar|notify)$/i
+handler.command = /^(hidetag|notificar|tag)$/i
 handler.group = true
 handler.admin = true
 
