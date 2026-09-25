@@ -29,7 +29,7 @@ apt-get update -y && apt-get upgrade -y
 ```
 
 ```bash
-pkg install -y git nodejs ffmpeg imagemagick && pkg install yarn
+pkg install -y git nodejs ffmpeg imagemagick && pkg install yarn && pkg install yt-dlp 
 ```
 
 ```bash
