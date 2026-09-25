@@ -120,6 +120,7 @@ let info = `
 │⭔ ${usedPrefix}slot
 │⭔ ${usedPrefix}tris (nome stanza)
 │⭔ ${usedPrefix}quiz
+│⭔ ${usedPrefix}bandiera
 │⭔ ${usedPrefix}calc (1+1)
 └───────⭓
 
