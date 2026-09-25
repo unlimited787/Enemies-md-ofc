@@ -1,0 +1,328 @@
+const parole = [
+    'computer',
+    'telefono',
+    'internet',
+    'whatsapp',
+    'tastiera',
+    'monitor',
+    'programma',
+    'javascript',
+    'informatica',
+    'videogioco',
+    'montagna',
+    'spiaggia',
+    'arcobaleno',
+    'temporale',
+    'automobile',
+    'bicicletta',
+    'aeroporto',
+    'stazione',
+    'ristorante',
+    'gelateria',
+    'biblioteca',
+    'universita',
+    'scuola',
+    'professore',
+    'studente',
+    'calcio',
+    'pallone',
+    'campione',
+    'formulauno',
+    'tennis',
+    'cinema',
+    'film',
+    'attore',
+    'musica',
+    'chitarra',
+    'pianoforte',
+    'concerto',
+    'italia',
+    'francia',
+    'germania',
+    'spagna',
+    'inghilterra',
+    'brasile',
+    'canada',
+    'australia',
+    'giappone',
+    'america',
+    'africa',
+    'europa',
+    'oceano',
+    'pianeta',
+    'galassia',
+    'universo',
+    'stella',
+    'luna',
+    'sole',
+    'animale',
+    'elefante',
+    'giraffa',
+    'coccodrillo',
+    'pinguino',
+    'farfalla',
+    'leone',
+    'tigre',
+    'cane',
+    'gatto',
+    'cavallo',
+    'scimmia',
+    'serpente',
+    'telefono',
+    'fotografia',
+    'videocamera',
+    'batteria',
+    'caricatore',
+    'internet',
+    'server',
+    'database',
+    'software',
+    'hardware',
+    'processore',
+    'memoria',
+    'scheda',
+    'robot',
+    'intelligenza',
+    'artificiale',
+    'economia',
+    'denaro',
+    'banca',
+    'mercato',
+    'azienda',
+    'lavoratore',
+    'contratto',
+    'politica',
+    'storia',
+    'geografia',
+    'scienza',
+    'matematica',
+    'letteratura',
+    'filosofia',
+    'universita'
+]
+
+const partite = new Map()
+
+const MAX_ERRORI = 6
+
+function normalizza(testo) {
+    return testo
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z]/g, '')
+}
+
+function creaMaschera(parola, lettere) {
+    return [...parola]
+        .map(lettera => lettere.has(lettera) ? lettera.toUpperCase() : '⬜')
+        .join(' ')
+}
+
+function statoPartita(partita) {
+    const maschera = creaMaschera(partita.parola, partita.lettere)
+
+    const errori = partita.errori.length
+    const rimasti = MAX_ERRORI - errori
+
+    return (
+        `🔤 *IMPICCATO*\n\n` +
+        `${maschera}\n\n` +
+        `❌ Errori: *${errori}/${MAX_ERRORI}*\n` +
+        `❤️ Tentativi rimasti: *${rimasti}*\n\n` +
+        `🔡 Lettere usate:\n` +
+        `${partita.usate.length ? partita.usate.map(x => x.toUpperCase()).join(', ') : 'Nessuna'}\n\n` +
+        `👉 Invia una lettera per giocare.\n` +
+        `💡 Puoi anche provare direttamente la parola.`
+    )
+}
+
+let handler = async (m, { conn }) => {
+    const chat = m.chat
+
+    if (partite.has(chat)) {
+        const partita = partite.get(chat)
+
+        return conn.reply(
+            chat,
+            `⚠️ *C'È GIÀ UNA PARTITA IN CORSO!*\n\n` +
+            statoPartita(partita),
+            m
+        )
+    }
+
+    const parola = normalizza(
+        parole[Math.floor(Math.random() * parole.length)]
+    )
+
+    if (!parola) {
+        return conn.reply(
+            chat,
+            '❌ Errore: impossibile scegliere una parola.',
+            m
+        )
+    }
+
+    const partita = {
+        parola,
+        lettere: new Set(),
+        usate: [],
+        errori: [],
+        startedBy: m.sender
+    }
+
+    partite.set(chat, partita)
+
+    await conn.reply(
+        chat,
+        `🎮 *NUOVA PARTITA: IMPICCATO!*\n\n` +
+        `Indovina la parola!\n\n` +
+        `${'⬜ '.repeat(parola.length).trim()}\n\n` +
+        `❌ Hai *${MAX_ERRORI} errori* disponibili.\n\n` +
+        `👉 Invia una *lettera* alla volta.\n` +
+        `💡 Oppure prova direttamente a indovinare la parola!`,
+        m
+    )
+}
+
+handler.before = async function (m, { conn }) {
+    if (!m || m.fromMe) return
+
+    const chat = m.chat
+    const partita = partite.get(chat)
+
+    if (!partita) return
+
+    if (typeof m.text !== 'string') return
+
+    const inputOriginale = m.text.trim()
+
+    if (!inputOriginale) return
+
+    const input = normalizza(inputOriginale)
+
+    if (!input) return
+
+    /*
+     * PAROLA COMPLETA
+     */
+
+    if (input.length > 1) {
+        if (input === partita.parola) {
+            partite.delete(chat)
+
+            return conn.reply(
+                chat,
+                `🎉 *HAI VINTO!*\n\n` +
+                `🏆 La parola era:\n` +
+                `*${partita.parola.toUpperCase()}*\n\n` +
+                `👏 Complimenti!`,
+                m
+            )
+        }
+
+        partita.errori.push(input)
+
+        if (partita.errori.length >= MAX_ERRORI) {
+            partite.delete(chat)
+
+            return conn.reply(
+                chat,
+                `💀 *SEI STATO IMPICCATO!*\n\n` +
+                `❌ Hai sbagliato la parola.\n\n` +
+                `✅ La parola era:\n` +
+                `*${partita.parola.toUpperCase()}*`,
+                m
+            )
+        }
+
+        return conn.reply(
+            chat,
+            `❌ *PAROLA SBAGLIATA!*\n\n` +
+            `Hai ancora *${MAX_ERRORI - partita.errori.length} errori* disponibili.\n\n` +
+            statoPartita(partita),
+            m
+        )
+    }
+
+    /*
+     * LETTERA
+     */
+
+    const lettera = input
+
+    if (!/^[a-z]$/.test(lettera)) return
+
+    if (partita.usate.includes(lettera)) {
+        return conn.reply(
+            chat,
+            `⚠️ La lettera *${lettera.toUpperCase()}* è già stata usata!\n\n` +
+            statoPartita(partita),
+            m
+        )
+    }
+
+    partita.usate.push(lettera)
+
+    /*
+     * LETTERA CORRETTA
+     */
+
+    if (partita.parola.includes(lettera)) {
+        partita.lettere.add(lettera)
+
+        const completata = [...partita.parola]
+            .every(x => partita.lettere.has(x))
+
+        if (completata) {
+            partite.delete(chat)
+
+            return conn.reply(
+                chat,
+                `🎉 *PAROLA COMPLETATA!*\n\n` +
+                `🏆 *${partita.parola.toUpperCase()}*\n\n` +
+                `👏 Complimenti, hai vinto!`,
+                m
+            )
+        }
+
+        return conn.reply(
+            chat,
+            `✅ *LETTERA CORRETTA!*\n\n` +
+            statoPartita(partita),
+            m
+        )
+    }
+
+    /*
+     * LETTERA SBAGLIATA
+     */
+
+    partita.errori.push(lettera)
+
+    if (partita.errori.length >= MAX_ERRORI) {
+        partite.delete(chat)
+
+        return conn.reply(
+            chat,
+            `💀 *GAME OVER!*\n\n` +
+            `Hai esaurito i tentativi.\n\n` +
+            `✅ La parola era:\n` +
+            `*${partita.parola.toUpperCase()}*`,
+            m
+        )
+    }
+
+    return conn.reply(
+        chat,
+        `❌ La lettera *${lettera.toUpperCase()}* non c'è!\n\n` +
+        statoPartita(partita),
+        m
+    )
+}
+
+handler.help = ['impiccato']
+handler.tags = ['game']
+handler.command = ['impiccato', 'hangman']
+
+export default handler
