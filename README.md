@@ -37,7 +37,7 @@ git clone https://github.com/unlimited787/Enemies-md-ofc && cd Enemies-md-ofc
 ```
 
 ```bash
-yarn install --ignore-engines
+yarn install 
 ```
 
 ```bash
