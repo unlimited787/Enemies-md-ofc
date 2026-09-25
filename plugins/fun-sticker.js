@@ -132,14 +132,25 @@ let handler = async (m, { conn, args }) => {
 
             await m.reply('ⓘ 𝐂𝐚𝐫𝐢𝐜𝐚𝐦𝐞𝐧𝐭𝐨 ...')
 
-            const img = await q.download?.()
+            let img
 
-            if (!img) {
-                throw new Error(
-                    'Impossibile scaricare il media'
-                )
-            }
+try {
+    img = await q.download()
+} catch (e) {
+    console.error('q.download() ERROR:', e)
+}
 
+console.log('STICKER DOWNLOAD:', {
+    exists: !!img,
+    type: typeof img,
+    isBuffer: Buffer.isBuffer(img),
+    size: Buffer.isBuffer(img) ? img.length : null,
+    mime
+})
+
+if (!img) {
+    throw new Error('q.download() non ha restituito il media')
+}
             /*
              * Prima prova direttamente con Buffer
              */
