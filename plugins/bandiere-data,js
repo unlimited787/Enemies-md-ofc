@@ -1,261 +1,97 @@
 const bandiere = [
     {
-        flag: '🇦🇫',
-        options: ['Afghanistan', 'Pakistan', 'Tagikistan', 'Iran'],
+        flag: '🇮🇹',
+        options: ['Italia', 'Francia', 'Spagna', 'Grecia'],
         answer: 0
     },
     {
-        flag: '🇦🇱',
-        options: ['Albania', 'Kosovo', 'Montenegro', 'Macedonia del Nord'],
+        flag: '🇫🇷',
+        options: ['Belgio', 'Francia', 'Paesi Bassi', 'Lussemburgo'],
+        answer: 1
+    },
+    {
+        flag: '🇩🇪',
+        options: ['Austria', 'Germania', 'Polonia', 'Svizzera'],
+        answer: 1
+    },
+    {
+        flag: '🇪🇸',
+        options: ['Portogallo', 'Spagna', 'Messico', 'Cile'],
+        answer: 1
+    },
+    {
+        flag: '🇵🇹',
+        options: ['Portogallo', 'Brasile', 'Spagna', 'Italia'],
         answer: 0
     },
     {
-        flag: '🇩🇿',
-        options: ['Algeria', 'Tunisia', 'Marocco', 'Libia'],
+        flag: '🇬🇧',
+        options: ['Australia', 'Regno Unito', 'Nuova Zelanda', 'Irlanda'],
+        answer: 1
+    },
+    {
+        flag: '🇮🇪',
+        options: ['Irlanda', 'Islanda', 'India', 'Costa d’Avorio'],
         answer: 0
     },
     {
-        flag: '🇦🇩',
-        options: ['Andorra', 'Monaco', 'San Marino', 'Liechtenstein'],
-        answer: 0
+        flag: '🇺🇸',
+        options: ['Liberia', 'Stati Uniti', 'Cuba', 'Australia'],
+        answer: 1
     },
     {
-        flag: '🇦🇴',
-        options: ['Angola', 'Mozambico', 'Zambia', 'Botswana'],
-        answer: 0
-    },
-    {
-        flag: '🇦🇬',
-        options: ['Antigua e Barbuda', 'Barbados', 'Bahamas', 'Saint Lucia'],
-        answer: 0
-    },
-    {
-        flag: '🇦🇷',
-        options: ['Argentina', 'Uruguay', 'Paraguay', 'Cile'],
-        answer: 0
-    },
-    {
-        flag: '🇦🇲',
-        options: ['Armenia', 'Georgia', 'Azerbaigian', 'Kazakistan'],
-        answer: 0
-    },
-    {
-        flag: '🇦🇺',
-        options: ['Australia', 'Nuova Zelanda', 'Figi', 'Canada'],
-        answer: 0
-    },
-    {
-        flag: '🇦🇹',
-        options: ['Austria', 'Lettonia', 'Polonia', 'Slovacchia'],
-        answer: 0
-    },
-    {
-        flag: '🇦🇿',
-        options: ['Azerbaigian', 'Armenia', 'Georgia', 'Turkmenistan'],
-        answer: 0
-    },
-
-    {
-        flag: '🇧🇸',
-        options: ['Bahamas', 'Barbados', 'Giamaica', 'Cuba'],
-        answer: 0
-    },
-    {
-        flag: '🇧🇭',
-        options: ['Bahrein', 'Qatar', 'Kuwait', 'Emirati Arabi Uniti'],
-        answer: 0
-    },
-    {
-        flag: '🇧🇩',
-        options: ['Bangladesh', 'Pakistan', 'India', 'Nepal'],
-        answer: 0
-    },
-    {
-        flag: '🇧🇧',
-        options: ['Barbados', 'Bahamas', 'Belize', 'Grenada'],
-        answer: 0
-    },
-    {
-        flag: '🇧🇾',
-        options: ['Belarus', 'Russia', 'Ucraina', 'Lituania'],
-        answer: 0
-    },
-    {
-        flag: '🇧🇪',
-        options: ['Belgio', 'Germania', 'Romania', 'Bulgaria'],
-        answer: 0
-    },
-    {
-        flag: '🇧🇿',
-        options: ['Belize', 'Guatemala', 'Honduras', 'Costa Rica'],
-        answer: 0
-    },
-    {
-        flag: '🇧🇯',
-        options: ['Benin', 'Togo', 'Ghana', 'Nigeria'],
-        answer: 0
-    },
-    {
-        flag: '🇧🇹',
-        options: ['Bhutan', 'Nepal', 'Bangladesh', 'Mongolia'],
-        answer: 0
-    },
-    {
-        flag: '🇧🇴',
-        options: ['Bolivia', 'Perù', 'Ecuador', 'Paraguay'],
-        answer: 0
-    },
-    {
-        flag: '🇧🇦',
-        options: ['Bosnia ed Erzegovina', 'Serbia', 'Croazia', 'Slovenia'],
-        answer: 0
-    },
-    {
-        flag: '🇧🇼',
-        options: ['Botswana', 'Namibia', 'Zimbabwe', 'Zambia'],
+        flag: '🇨🇦',
+        options: ['Canada', 'Austria', 'Danimarca', 'Svizzera'],
         answer: 0
     },
     {
         flag: '🇧🇷',
-        options: ['Brasile', 'Argentina', 'Colombia', 'Venezuela'],
+        options: ['Brasile', 'Argentina', 'Bolivia', 'Colombia'],
         answer: 0
     },
     {
-        flag: '🇧🇳',
-        options: ['Brunei', 'Malesia', 'Indonesia', 'Singapore'],
+        flag: '🇦🇷',
+        options: ['Uruguay', 'Argentina', 'Paraguay', 'Cile'],
+        answer: 1
+    },
+    {
+        flag: '🇲🇽',
+        options: ['Messico', 'Italia', 'Cile', 'Perù'],
         answer: 0
     },
     {
-        flag: '🇧🇬',
-        options: ['Bulgaria', 'Ungheria', 'Romania', 'Serbia'],
-        answer: 0
-    },
-    {
-        flag: '🇧🇫',
-        options: ['Burkina Faso', 'Ghana', 'Benin', 'Niger'],
-        answer: 0
-    },
-    {
-        flag: '🇧🇮',
-        options: ['Burundi', 'Ruanda', 'Uganda', 'Tanzania'],
-        answer: 0
-    },
-
-    {
-        flag: '🇨🇻',
-        options: ['Capo Verde', 'Seychelles', 'Comore', 'Mauritius'],
-        answer: 0
-    },
-    {
-        flag: '🇰🇭',
-        options: ['Cambogia', 'Thailandia', 'Laos', 'Vietnam'],
-        answer: 0
-    },
-    {
-        flag: '🇨🇲',
-        options: ['Camerun', 'Senegal', 'Ghana', 'Nigeria'],
-        answer: 0
-    },
-    {
-        flag: '🇨🇦',
-        options: ['Canada', 'Stati Uniti', 'Australia', 'Regno Unito'],
-        answer: 0
-    },
-    {
-        flag: '🇨🇫',
-        options: ['Repubblica Centrafricana', 'Ciad', 'Camerun', 'Congo'],
-        answer: 0
-    },
-    {
-        flag: '🇹🇩',
-        options: ['Ciad', 'Romania', 'Repubblica Centrafricana', 'Niger'],
-        answer: 0
-    },
-    {
-        flag: '🇨🇱',
-        options: ['Cile', 'Argentina', 'Perù', 'Ecuador'],
-        answer: 0
+        flag: '🇯🇵',
+        options: ['Cina', 'Giappone', 'Corea del Sud', 'Vietnam'],
+        answer: 1
     },
     {
         flag: '🇨🇳',
-        options: ['Cina', 'Vietnam', 'Corea del Nord', 'Mongolia'],
+        options: ['Cina', 'Vietnam', 'Mongolia', 'Corea del Nord'],
         answer: 0
     },
     {
-        flag: '🇨🇴',
-        options: ['Colombia', 'Ecuador', 'Venezuela', 'Perù'],
+        flag: '🇰🇷',
+        options: ['Corea del Sud', 'Corea del Nord', 'Giappone', 'Singapore'],
         answer: 0
     },
     {
-        flag: '🇰🇲',
-        options: ['Comore', 'Seychelles', 'Mauritius', 'Madagascar'],
+        flag: '🇮🇳',
+        options: ['India', 'Niger', 'Irlanda', 'Costa d’Avorio'],
         answer: 0
     },
     {
-        flag: '🇨🇬',
-        options: ['Congo', 'Repubblica Democratica del Congo', 'Gabon', 'Angola'],
-        answer: 0
+        flag: '🇦🇺',
+        options: ['Nuova Zelanda', 'Australia', 'Regno Unito', 'Figi'],
+        answer: 1
     },
     {
-        flag: '🇨🇩',
-        options: ['Repubblica Democratica del Congo', 'Congo', 'Angola', 'Zambia'],
-        answer: 0
+        flag: '🇳🇿',
+        options: ['Australia', 'Nuova Zelanda', 'Islanda', 'Figi'],
+        answer: 1
     },
     {
-        flag: '🇨🇷',
-        options: ['Costa Rica', 'Panama', 'Nicaragua', 'Honduras'],
-        answer: 0
-    },
-    {
-        flag: '🇨🇮',
-        options: ["Costa d'Avorio", 'Irlanda', 'Ghana', 'Senegal'],
-        answer: 0
-    },
-    {
-        flag: '🇭🇷',
-        options: ['Croazia', 'Serbia', 'Slovenia', 'Slovacchia'],
-        answer: 0
-    },
-    {
-        flag: '🇨🇺',
-        options: ['Cuba', 'Porto Rico', 'Repubblica Dominicana', 'Giamaica'],
-        answer: 0
-    },
-    {
-        flag: '🇨🇾',
-        options: ['Cipro', 'Grecia', 'Malta', 'Turchia'],
-        answer: 0
-    },
-    {
-        flag: '🇨🇿',
-        options: ['Cechia', 'Slovacchia', 'Slovenia', 'Croazia'],
-        answer: 0
-    },
-
-    {
-        flag: '🇩🇰',
-        options: ['Danimarca', 'Norvegia', 'Svezia', 'Finlandia'],
-        answer: 0
-    },
-    {
-        flag: '🇩🇯',
-        options: ['Gibuti', 'Eritrea', 'Somalia', 'Etiopia'],
-        answer: 0
-    },
-    {
-        flag: '🇩🇲',
-        options: ['Dominica', 'Repubblica Dominicana', 'Grenada', 'Saint Lucia'],
-        answer: 0
-    },
-    {
-        flag: '🇩🇴',
-        options: ['Repubblica Dominicana', 'Dominica', 'Haiti', 'Cuba'],
-        answer: 0
-    },
-
-    {
-        flag: '🇪🇨',
-        options: ['Ecuador', 'Colombia', 'Perù', 'Bolivia'],
+        flag: '🇿🇦',
+        options: ['Sudafrica', 'Kenya', 'Namibia', 'Botswana'],
         answer: 0
     },
     {
@@ -264,466 +100,83 @@ const bandiere = [
         answer: 0
     },
     {
-        flag: '🇸🇻',
-        options: ['El Salvador', 'Honduras', 'Nicaragua', 'Guatemala'],
-        answer: 0
-    },
-    {
-        flag: '🇬🇶',
-        options: ['Guinea Equatoriale', 'Guinea', 'Gabon', 'Camerun'],
-        answer: 0
-    },
-    {
-        flag: '🇪🇷',
-        options: ['Eritrea', 'Etiopia', 'Gibuti', 'Somalia'],
-        answer: 0
-    },
-    {
-        flag: '🇪🇪',
-        options: ['Estonia', 'Lettonia', 'Lituania', 'Finlandia'],
-        answer: 0
-    },
-    {
-        flag: '🇸🇿',
-        options: ['Eswatini', 'Lesotho', 'Sudafrica', 'Botswana'],
-        answer: 0
-    },
-    {
-        flag: '🇪🇹',
-        options: ['Etiopia', 'Eritrea', 'Kenya', 'Somalia'],
-        answer: 0
-    },
-
-    {
-        flag: '🇫🇯',
-        options: ['Figi', 'Samoa', 'Tonga', 'Vanuatu'],
-        answer: 0
-    },
-    {
-        flag: '🇫🇮',
-        options: ['Finlandia', 'Svezia', 'Norvegia', 'Islanda'],
-        answer: 0
-    },
-    {
-        flag: '🇫🇷',
-        options: ['Francia', 'Italia', 'Belgio', 'Paesi Bassi'],
-        answer: 0
-    },
-
-    {
-        flag: '🇬🇦',
-        options: ['Gabon', 'Camerun', 'Congo', 'Guinea Equatoriale'],
-        answer: 0
-    },
-    {
-        flag: '🇬🇲',
-        options: ['Gambia', 'Senegal', 'Guinea-Bissau', 'Guinea'],
-        answer: 0
-    },
-    {
-        flag: '🇬🇪',
-        options: ['Georgia', 'Armenia', 'Azerbaigian', 'Turchia'],
-        answer: 0
-    },
-    {
-        flag: '🇩🇪',
-        options: ['Germania', 'Belgio', 'Austria', 'Polonia'],
-        answer: 0
-    },
-    {
-        flag: '🇬🇭',
-        options: ['Ghana', 'Guinea', 'Senegal', 'Benin'],
-        answer: 0
+        flag: '🇹🇷',
+        options: ['Tunisia', 'Turchia', 'Pakistan', 'Albania'],
+        answer: 1
     },
     {
         flag: '🇬🇷',
-        options: ['Grecia', 'Cipro', 'Turchia', 'Italia'],
-        answer: 0
-    },
-    {
-        flag: '🇬🇩',
-        options: ['Grenada', 'Dominica', 'Barbados', 'Saint Lucia'],
-        answer: 0
-    },
-    {
-        flag: '🇬🇹',
-        options: ['Guatemala', 'Honduras', 'El Salvador', 'Nicaragua'],
-        answer: 0
-    },
-    {
-        flag: '🇬🇳',
-        options: ['Guinea', 'Guinea-Bissau', 'Guinea Equatoriale', 'Sierra Leone'],
-        answer: 0
-    },
-    {
-        flag: '🇬🇼',
-        options: ['Guinea-Bissau', 'Guinea', 'Senegal', 'Gambia'],
-        answer: 0
-    },
-    {
-        flag: '🇬🇾',
-        options: ['Guyana', 'Suriname', 'Venezuela', 'Brasile'],
-        answer: 0
-    },
-
-    {
-        flag: '🇭🇹',
-        options: ['Haiti', 'Repubblica Dominicana', 'Cuba', 'Giamaica'],
-        answer: 0
-    },
-    {
-        flag: '🇭🇳',
-        options: ['Honduras', 'El Salvador', 'Nicaragua', 'Guatemala'],
-        answer: 0
-    },
-    {
-        flag: '🇭🇺',
-        options: ['Ungheria', 'Bulgaria', 'Romania', 'Slovacchia'],
-        answer: 0
-    },
-
-    {
-        flag: '🇮🇸',
-        options: ['Islanda', 'Norvegia', 'Finlandia', 'Danimarca'],
-        answer: 0
-    },
-    {
-        flag: '🇮🇳',
-        options: ['India', 'Pakistan', 'Bangladesh', 'Nepal'],
-        answer: 0
-    },
-    {
-        flag: '🇮🇩',
-        options: ['Indonesia', 'Monaco', 'Polonia', 'Singapore'],
-        answer: 0
-    },
-    {
-        flag: '🇮🇷',
-        options: ['Iran', 'Iraq', 'Afghanistan', 'Pakistan'],
-        answer: 0
-    },
-    {
-        flag: '🇮🇶',
-        options: ['Iraq', 'Iran', 'Siria', 'Kuwait'],
-        answer: 0
-    },
-    {
-        flag: '🇮🇪',
-        options: ['Irlanda', "Costa d'Avorio", 'Italia', 'India'],
-        answer: 0
-    },
-    {
-        flag: '🇮🇱',
-        options: ['Israele', 'Grecia', 'Cipro', 'Libano'],
-        answer: 0
-    },
-    {
-        flag: '🇮🇹',
-        options: ['Italia', 'Francia', 'Irlanda', 'Ungheria'],
-        answer: 0
-    },
-
-    {
-        flag: '🇯🇲',
-        options: ['Giamaica', 'Cuba', 'Bahamas', 'Barbados'],
-        answer: 0
-    },
-    {
-        flag: '🇯🇵',
-        options: ['Giappone', 'Cina', 'Corea del Sud', 'Vietnam'],
-        answer: 0
-    },
-    {
-        flag: '🇯🇴',
-        options: ['Giordania', 'Palestina', 'Iraq', 'Siria'],
-        answer: 0
-    },
-
-    {
-        flag: '🇰🇿',
-        options: ['Kazakistan', 'Uzbekistan', 'Kirghizistan', 'Turkmenistan'],
-        answer: 0
-    },
-    {
-        flag: '🇰🇪',
-        options: ['Kenya', 'Uganda', 'Tanzania', 'Somalia'],
-        answer: 0
-    },
-    {
-        flag: '🇰🇮',
-        options: ['Kiribati', 'Tuvalu', 'Nauru', 'Samoa'],
-        answer: 0
-    },
-    {
-        flag: '🇰🇵',
-        options: ['Corea del Nord', 'Corea del Sud', 'Cina', 'Mongolia'],
-        answer: 0
-    },
-    {
-        flag: '🇰🇷',
-        options: ['Corea del Sud', 'Corea del Nord', 'Giappone', 'Cina'],
-        answer: 0
-    },
-    {
-        flag: '🇰🇼',
-        options: ['Kuwait', 'Qatar', 'Bahrein', 'Emirati Arabi Uniti'],
-        answer: 0
-    },
-    {
-        flag: '🇰🇬',
-        options: ['Kirghizistan', 'Kazakistan', 'Tagikistan', 'Uzbekistan'],
-        answer: 0
-    },
-
-    {
-        flag: '🇱🇦',
-        options: ['Laos', 'Thailandia', 'Cambogia', 'Vietnam'],
-        answer: 0
-    },
-    {
-        flag: '🇱🇻',
-        options: ['Lettonia', 'Lituania', 'Estonia', 'Polonia'],
-        answer: 0
-    },
-    {
-        flag: '🇱🇧',
-        options: ['Libano', 'Israele', 'Siria', 'Giordania'],
-        answer: 0
-    },
-    {
-        flag: '🇱🇸',
-        options: ['Lesotho', 'Eswatini', 'Sudafrica', 'Botswana'],
-        answer: 0
-    },
-    {
-        flag: '🇱🇷',
-        options: ['Liberia', 'Ghana', 'Sierra Leone', 'Nigeria'],
-        answer: 0
-    },
-    {
-        flag: '🇱🇾',
-        options: ['Libia', 'Tunisia', 'Algeria', 'Egitto'],
-        answer: 0
-    },
-    {
-        flag: '🇱🇮',
-        options: ['Liechtenstein', 'Lussemburgo', 'Monaco', 'Andorra'],
-        answer: 0
-    },
-    {
-        flag: '🇱🇹',
-        options: ['Lituania', 'Lettonia', 'Estonia', 'Finlandia'],
-        answer: 0
-    },
-    {
-        flag: '🇱🇺',
-        options: ['Lussemburgo', 'Paesi Bassi', 'Belgio', 'Liechtenstein'],
-        answer: 0
-    },
-
-    {
-        flag: '🇲🇬',
-        options: ['Madagascar', 'Mauritius', 'Comore', 'Seychelles'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇼',
-        options: ['Malawi', 'Zambia', 'Mozambico', 'Zimbabwe'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇾',
-        options: ['Malesia', 'Indonesia', 'Brunei', 'Singapore'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇻',
-        options: ['Maldive', 'Sri Lanka', 'Seychelles', 'Mauritius'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇱',
-        options: ['Mali', 'Senegal', 'Niger', 'Burkina Faso'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇹',
-        options: ['Malta', 'Cipro', 'Italia', 'Grecia'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇭',
-        options: ['Isole Marshall', 'Micronesia', 'Palau', 'Kiribati'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇷',
-        options: ['Mauritania', 'Mali', 'Marocco', 'Senegal'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇺',
-        options: ['Mauritius', 'Seychelles', 'Madagascar', 'Comore'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇽',
-        options: ['Messico', 'Guatemala', 'Colombia', 'Perù'],
-        answer: 0
-    },
-    {
-        flag: '🇫🇲',
-        options: ['Micronesia', 'Palau', 'Isole Marshall', 'Nauru'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇩',
-        options: ['Moldavia', 'Romania', 'Ucraina', 'Bulgaria'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇨',
-        options: ['Monaco', 'Indonesia', 'Polonia', 'Liechtenstein'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇳',
-        options: ['Mongolia', 'Kazakistan', 'Cina', 'Kirghizistan'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇪',
-        options: ['Montenegro', 'Serbia', 'Croazia', 'Albania'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇦',
-        options: ['Marocco', 'Tunisia', 'Algeria', 'Mauritania'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇿',
-        options: ['Mozambico', 'Angola', 'Zambia', 'Zimbabwe'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇲',
-        options: ['Myanmar', 'Thailandia', 'Laos', 'Bangladesh'],
-        answer: 0
-    },
-
-    {
-        flag: '🇳🇦',
-        options: ['Namibia', 'Botswana', 'Sudafrica', 'Angola'],
-        answer: 0
-    },
-    {
-        flag: '🇳🇷',
-        options: ['Nauru', 'Kiribati', 'Tuvalu', 'Palau'],
-        answer: 0
-    },
-    {
-        flag: '🇳🇵',
-        options: ['Nepal', 'Bhutan', 'India', 'Bangladesh'],
+        options: ['Grecia', 'Uruguay', 'Israele', 'Finlandia'],
         answer: 0
     },
     {
         flag: '🇳🇱',
-        options: ['Paesi Bassi', 'Lussemburgo', 'Belgio', 'Danimarca'],
+        options: ['Paesi Bassi', 'Lussemburgo', 'Francia', 'Russia'],
         answer: 0
     },
     {
-        flag: '🇳🇿',
-        options: ['Nuova Zelanda', 'Australia', 'Figi', 'Samoa'],
+        flag: '🇧🇪',
+        options: ['Belgio', 'Germania', 'Romania', 'Bulgaria'],
         answer: 0
     },
     {
-        flag: '🇳🇮',
-        options: ['Nicaragua', 'Honduras', 'Costa Rica', 'El Salvador'],
+        flag: '🇨🇭',
+        options: ['Svizzera', 'Danimarca', 'Austria', 'Georgia'],
         answer: 0
     },
     {
-        flag: '🇳🇪',
-        options: ['Niger', 'Nigeria', 'Mali', 'Burkina Faso'],
-        answer: 0
-    },
-    {
-        flag: '🇳🇬',
-        options: ['Nigeria', 'Niger', 'Ghana', 'Benin'],
-        answer: 0
-    },
-    {
-        flag: '🇲🇰',
-        options: ['Macedonia del Nord', 'Albania', 'Bulgaria', 'Serbia'],
-        answer: 0
-    },
-    {
-        flag: '🇳🇴',
-        options: ['Norvegia', 'Danimarca', 'Svezia', 'Islanda'],
-        answer: 0
-    },
-
-    {
-        flag: '🇴🇲',
-        options: ['Oman', 'Yemen', 'Emirati Arabi Uniti', 'Arabia Saudita'],
-        answer: 0
-    },
-
-    {
-        flag: '🇵🇰',
-        options: ['Pakistan', 'India', 'Bangladesh', 'Afghanistan'],
-        answer: 0
-    },
-    {
-        flag: '🇵🇼',
-        options: ['Palau', 'Micronesia', 'Isole Marshall', 'Kiribati'],
-        answer: 0
-    },
-    {
-        flag: '🇵🇦',
-        options: ['Panama', 'Costa Rica', 'Colombia', 'Nicaragua'],
-        answer: 0
-    },
-    {
-        flag: '🇵🇬',
-        options: ['Papua Nuova Guinea', 'Nuova Zelanda', 'Figi', 'Isole Salomone'],
-        answer: 0
-    },
-    {
-        flag: '🇵🇾',
-        options: ['Paraguay', 'Uruguay', 'Bolivia', 'Argentina'],
-        answer: 0
-    },
-    {
-        flag: '🇵🇪',
-        options: ['Perù', 'Cile', 'Bolivia', 'Ecuador'],
-        answer: 0
-    },
-    {
-        flag: '🇵🇭',
-        options: ['Filippine', 'Indonesia', 'Malesia', 'Vietnam'],
+        flag: '🇦🇹',
+        options: ['Austria', 'Lettonia', 'Polonia', 'Ungheria'],
         answer: 0
     },
     {
         flag: '🇵🇱',
-        options: ['Polonia', 'Monaco', 'Indonesia', 'Austria'],
+        options: ['Polonia', 'Indonesia', 'Monaco', 'Singapore'],
         answer: 0
     },
     {
-        flag: '🇵🇹',
-        options: ['Portogallo', 'Spagna', 'Italia', 'Brasile'],
-        answer: 0
+        flag: '🇨🇿',
+        options: ['Slovacchia', 'Repubblica Ceca', 'Slovenia', 'Croazia'],
+        answer: 1
     },
-
     {
-        flag: '🇶🇦',
-        options: ['Qatar', 'Bahrein', 'Kuwait', 'Emirati Arabi Uniti'],
+        flag: '🇭🇺',
+        options: ['Ungheria', 'Bulgaria', 'Italia', 'Iran'],
         answer: 0
     },
-
     {
         flag: '🇷🇴',
-        options: ['Romania', 'Ciad', 'Moldavia', 'Bulgaria'],
+        options: ['Romania', 'Ciad', 'Moldavia', 'Andorra'],
+        answer: 0
+    },
+    {
+        flag: '🇧🇬',
+        options: ['Bulgaria', 'Ungheria', 'Lituania', 'Slovacchia'],
+        answer: 0
+    },
+    {
+        flag: '🇭🇷',
+        options: ['Croazia', 'Slovenia', 'Serbia', 'Slovacchia'],
+        answer: 0
+    },
+    {
+        flag: '🇷🇸',
+        options: ['Serbia', 'Croazia', 'Montenegro', 'Slovenia'],
+        answer: 0
+    },
+    {
+        flag: '🇸🇮',
+        options: ['Slovenia', 'Slovacchia', 'Serbia', 'Croazia'],
+        answer: 0
+    },
+    {
+        flag: '🇸🇰',
+        options: ['Slovacchia', 'Slovenia', 'Repubblica Ceca', 'Croazia'],
+        answer: 0
+    },
+    {
+        flag: '🇺🇦',
+        options: ['Ucraina', 'Svezia', 'Kazakhstan', 'Estonia'],
         answer: 0
     },
     {
@@ -732,216 +185,53 @@ const bandiere = [
         answer: 0
     },
     {
-        flag: '🇷🇼',
-        options: ['Ruanda', 'Burundi', 'Uganda', 'Kenya'],
-        answer: 0
-    },
-
-    {
-        flag: '🇰🇳',
-        options: ['Saint Kitts e Nevis', 'Saint Lucia', 'Grenada', 'Dominica'],
-        answer: 0
-    },
-    {
-        flag: '🇱🇨',
-        options: ['Saint Lucia', 'Saint Vincent e Grenadine', 'Dominica', 'Grenada'],
-        answer: 0
-    },
-    {
-        flag: '🇻🇨',
-        options: ['Saint Vincent e Grenadine', 'Saint Lucia', 'Grenada', 'Barbados'],
-        answer: 0
-    },
-    {
-        flag: '🇼🇸',
-        options: ['Samoa', 'Tonga', 'Figi', 'Tuvalu'],
-        answer: 0
-    },
-    {
-        flag: '🇸🇲',
-        options: ['San Marino', 'Monaco', 'Vaticano', 'Andorra'],
-        answer: 0
-    },
-    {
-        flag: '🇸🇹',
-        options: ['São Tomé e Príncipe', 'Capo Verde', 'Guinea-Bissau', 'Angola'],
-        answer: 0
-    },
-    {
-        flag: '🇸🇦',
-        options: ['Arabia Saudita', 'Iran', 'Iraq', 'Oman'],
-        answer: 0
-    },
-    {
-        flag: '🇸🇳',
-        options: ['Senegal', 'Mali', 'Gambia', 'Guinea'],
-        answer: 0
-    },
-    {
-        flag: '🇷🇸',
-        options: ['Serbia', 'Croazia', 'Montenegro', 'Bosnia ed Erzegovina'],
-        answer: 0
-    },
-    {
-        flag: '🇸🇨',
-        options: ['Seychelles', 'Mauritius', 'Comore', 'Madagascar'],
-        answer: 0
-    },
-    {
-        flag: '🇸🇱',
-        options: ['Sierra Leone', 'Liberia', 'Guinea', 'Ghana'],
-        answer: 0
-    },
-    {
-        flag: '🇸🇬',
-        options: ['Singapore', 'Indonesia', 'Malesia', 'Brunei'],
-        answer: 0
-    },
-    {
-        flag: '🇸🇰',
-        options: ['Slovacchia', 'Slovenia', 'Cechia', 'Croazia'],
-        answer: 0
-    },
-    {
-        flag: '🇸🇮',
-        options: ['Slovenia', 'Slovacchia', 'Croazia', 'Serbia'],
-        answer: 0
-    },
-    {
-        flag: '🇸🇧',
-        options: ['Isole Salomone', 'Vanuatu', 'Figi', 'Papua Nuova Guinea'],
-        answer: 0
-    },
-    {
-        flag: '🇸🇴',
-        options: ['Somalia', 'Etiopia', 'Kenya', 'Gibuti'],
-        answer: 0
-    },
-    {
-        flag: '🇿🇦',
-        options: ['Sudafrica', 'Namibia', 'Botswana', 'Zimbabwe'],
-        answer: 0
-    },
-    {
-        flag: '🇸🇸',
-        options: ['Sudan del Sud', 'Sudan', 'Uganda', 'Etiopia'],
-        answer: 0
-    },
-    {
-        flag: '🇪🇸',
-        options: ['Spagna', 'Portogallo', 'Italia', 'Romania'],
-        answer: 0
-    },
-    {
-        flag: '🇱🇰',
-        options: ['Sri Lanka', 'India', 'Nepal', 'Bangladesh'],
-        answer: 0
-    },
-    {
-        flag: '🇸🇩',
-        options: ['Sudan', 'Sudan del Sud', 'Egitto', 'Ciad'],
-        answer: 0
-    },
-    {
-        flag: '🇸🇷',
-        options: ['Suriname', 'Guyana', 'Venezuela', 'Brasile'],
+        flag: '🇳🇴',
+        options: ['Norvegia', 'Islanda', 'Danimarca', 'Finlandia'],
         answer: 0
     },
     {
         flag: '🇸🇪',
-        options: ['Svezia', 'Finlandia', 'Norvegia', 'Danimarca'],
+        options: ['Svezia', 'Finlandia', 'Islanda', 'Norvegia'],
         answer: 0
     },
     {
-        flag: '🇨🇭',
-        options: ['Svizzera', 'Austria', 'Liechtenstein', 'Lussemburgo'],
+        flag: '🇫🇮',
+        options: ['Finlandia', 'Grecia', 'Islanda', 'Svezia'],
         answer: 0
     },
     {
-        flag: '🇸🇾',
-        options: ['Siria', 'Iraq', 'Libano', 'Giordania'],
-        answer: 0
-    },
-
-    {
-        flag: '🇹🇯',
-        options: ['Tagikistan', 'Uzbekistan', 'Kirghizistan', 'Kazakistan'],
+        flag: '🇩🇰',
+        options: ['Danimarca', 'Norvegia', 'Islanda', 'Svezia'],
         answer: 0
     },
     {
-        flag: '🇹🇿',
-        options: ['Tanzania', 'Kenya', 'Uganda', 'Mozambico'],
+        flag: '🇮🇸',
+        options: ['Islanda', 'Norvegia', 'Finlandia', 'Danimarca'],
         answer: 0
     },
     {
-        flag: '🇹🇭',
-        options: ['Thailandia', 'Cambogia', 'Laos', 'Myanmar'],
+        flag: '🇨🇺',
+        options: ['Cuba', 'Porto Rico', 'Repubblica Dominicana', 'Costa Rica'],
         answer: 0
     },
     {
-        flag: '🇹🇱',
-        options: ['Timor Est', 'Indonesia', 'Filippine', 'Papua Nuova Guinea'],
+        flag: '🇨🇱',
+        options: ['Cile', 'Texas', 'Liberia', 'Cuba'],
         answer: 0
     },
     {
-        flag: '🇹🇬',
-        options: ['Togo', 'Benin', 'Ghana', 'Nigeria'],
+        flag: '🇵🇪',
+        options: ['Perù', 'Austria', 'Canada', 'Polonia'],
         answer: 0
     },
     {
-        flag: '🇹🇴',
-        options: ['Tonga', 'Samoa', 'Figi', 'Tuvalu'],
+        flag: '🇨🇴',
+        options: ['Colombia', 'Ecuador', 'Venezuela', 'Bolivia'],
         answer: 0
     },
     {
-        flag: '🇹🇹',
-        options: ['Trinidad e Tobago', 'Giamaica', 'Barbados', 'Bahamas'],
-        answer: 0
-    },
-    {
-        flag: '🇹🇳',
-        options: ['Tunisia', 'Turchia', 'Algeria', 'Marocco'],
-        answer: 0
-    },
-    {
-        flag: '🇹🇷',
-        options: ['Turchia', 'Tunisia', 'Azerbaigian', 'Cipro'],
-        answer: 0
-    },
-    {
-        flag: '🇹🇲',
-        options: ['Turkmenistan', 'Uzbekistan', 'Kazakistan', 'Iran'],
-        answer: 0
-    },
-    {
-        flag: '🇹🇻',
-        options: ['Tuvalu', 'Kiribati', 'Nauru', 'Samoa'],
-        answer: 0
-    },
-
-    {
-        flag: '🇺🇬',
-        options: ['Uganda', 'Kenya', 'Tanzania', 'Ruanda'],
-        answer: 0
-    },
-    {
-        flag: '🇺🇦',
-        options: ['Ucraina', 'Russia', 'Belarus', 'Romania'],
-        answer: 0
-    },
-    {
-        flag: '🇦🇪',
-        options: ['Emirati Arabi Uniti', 'Qatar', 'Arabia Saudita', 'Oman'],
-        answer: 0
-    },
-    {
-        flag: '🇬🇧',
-        options: ['Regno Unito', 'Australia', 'Nuova Zelanda', 'Canada'],
-        answer: 0
-    },
-    {
-        flag: '🇺🇸',
-        options: ['Stati Uniti', 'Liberia', 'Canada', 'Australia'],
+        flag: '🇻🇪',
+        options: ['Venezuela', 'Colombia', 'Ecuador', 'Bolivia'],
         answer: 0
     },
     {
@@ -950,24 +240,103 @@ const bandiere = [
         answer: 0
     },
     {
-        flag: '🇺🇿',
-        options: ['Uzbekistan', 'Kazakistan', 'Tagikistan', 'Turkmenistan'],
-        answer: 0
-    },
-
-    {
-        flag: '🇻🇺',
-        options: ['Vanuatu', 'Figi', 'Isole Salomone', 'Samoa'],
+        flag: '🇵🇾',
+        options: ['Paraguay', 'Uruguay', 'Bolivia', 'Argentina'],
         answer: 0
     },
     {
-        flag: '🇻🇦',
-        options: ['Città del Vaticano', 'San Marino', 'Monaco', 'Italia'],
+        flag: '🇧🇴',
+        options: ['Bolivia', 'Perù', 'Ecuador', 'Paraguay'],
         answer: 0
     },
     {
-        flag: '🇻🇪',
-        options: ['Venezuela', 'Colombia', 'Ecuador', 'Guyana'],
+        flag: '🇪🇨',
+        options: ['Ecuador', 'Colombia', 'Venezuela', 'Bolivia'],
+        answer: 0
+    },
+    {
+        flag: '🇨🇷',
+        options: ['Costa Rica', 'Panama', 'Nicaragua', 'Honduras'],
+        answer: 0
+    },
+    {
+        flag: '🇵🇦',
+        options: ['Panama', 'Costa Rica', 'Cuba', 'Guatemala'],
+        answer: 0
+    },
+    {
+        flag: '🇯🇲',
+        options: ['Giamaica', 'Kenya', 'Ghana', 'Sudafrica'],
+        answer: 0
+    },
+    {
+        flag: '🇰🇪',
+        options: ['Kenya', 'Ghana', 'Uganda', 'Tanzania'],
+        answer: 0
+    },
+    {
+        flag: '🇬🇭',
+        options: ['Ghana', 'Guinea', 'Senegal', 'Nigeria'],
+        answer: 0
+    },
+    {
+        flag: '🇳🇬',
+        options: ['Nigeria', 'Niger', 'Ghana', 'Kenya'],
+        answer: 0
+    },
+    {
+        flag: '🇲🇦',
+        options: ['Marocco', 'Tunisia', 'Algeria', 'Egitto'],
+        answer: 0
+    },
+    {
+        flag: '🇩🇿',
+        options: ['Algeria', 'Marocco', 'Tunisia', 'Libia'],
+        answer: 0
+    },
+    {
+        flag: '🇹🇳',
+        options: ['Tunisia', 'Turchia', 'Marocco', 'Algeria'],
+        answer: 0
+    },
+    {
+        flag: '🇸🇦',
+        options: ['Arabia Saudita', 'Pakistan', 'Iran', 'Iraq'],
+        answer: 0
+    },
+    {
+        flag: '🇦🇪',
+        options: ['Emirati Arabi Uniti', 'Qatar', 'Kuwait', 'Oman'],
+        answer: 0
+    },
+    {
+        flag: '🇶🇦',
+        options: ['Qatar', 'Bahrain', 'Kuwait', 'Emirati Arabi Uniti'],
+        answer: 0
+    },
+    {
+        flag: '🇮🇱',
+        options: ['Israele', 'Grecia', 'Argentina', 'Cipro'],
+        answer: 0
+    },
+    {
+        flag: '🇮🇷',
+        options: ['Iran', 'Iraq', 'Pakistan', 'Afghanistan'],
+        answer: 0
+    },
+    {
+        flag: '🇮🇶',
+        options: ['Iraq', 'Iran', 'Kuwait', 'Siria'],
+        answer: 0
+    },
+    {
+        flag: '🇵🇰',
+        options: ['Pakistan', 'India', 'Bangladesh', 'Afghanistan'],
+        answer: 0
+    },
+    {
+        flag: '🇹🇭',
+        options: ['Thailandia', 'Costa Rica', 'Cambogia', 'Laos'],
         answer: 0
     },
     {
@@ -975,27 +344,144 @@ const bandiere = [
         options: ['Vietnam', 'Cina', 'Laos', 'Cambogia'],
         answer: 0
     },
-
     {
-        flag: '🇾🇪',
-        options: ['Yemen', 'Oman', 'Arabia Saudita', 'Emirati Arabi Uniti'],
-        answer: 0
-    },
-
-    {
-        flag: '🇿🇲',
-        options: ['Zambia', 'Zimbabwe', 'Malawi', 'Mozambico'],
+        flag: '🇵🇭',
+        options: ['Filippine', 'Indonesia', 'Malesia', 'Thailandia'],
         answer: 0
     },
     {
-        flag: '🇿🇼',
-        options: ['Zimbabwe', 'Zambia', 'Botswana', 'Mozambico'],
+        flag: '🇮🇩',
+        options: ['Indonesia', 'Monaco', 'Polonia', 'Singapore'],
         answer: 0
     },
-
     {
-        flag: '🇵🇸',
-        options: ['Palestina', 'Giordania', 'Libano', 'Siria'],
+        flag: '🇲🇾',
+        options: ['Malesia', 'Liberia', 'Indonesia', 'Brunei'],
+        answer: 0
+    },
+    {
+        flag: '🇸🇬',
+        options: ['Singapore', 'Indonesia', 'Monaco', 'Malesia'],
+        answer: 0
+    },
+    {
+        flag: '🇳🇵',
+        options: ['Nepal', 'Bhutan', 'India', 'Bangladesh'],
+        answer: 0
+    },
+    {
+        flag: '🇧🇩',
+        options: ['Bangladesh', 'Pakistan', 'India', 'Nepal'],
+        answer: 0
+    },
+    {
+        flag: '🇱🇰',
+        options: ['Sri Lanka', 'India', 'Nepal', 'Bhutan'],
+        answer: 0
+    },
+    {
+        flag: '🇲🇳',
+        options: ['Mongolia', 'Kazakhstan', 'Cina', 'Kyrgyzstan'],
+        answer: 0
+    },
+    {
+        flag: '🇰🇿',
+        options: ['Kazakhstan', 'Uzbekistan', 'Mongolia', 'Kirghizistan'],
+        answer: 0
+    },
+    {
+        flag: '🇺🇿',
+        options: ['Uzbekistan', 'Kazakhstan', 'Turkmenistan', 'Tagikistan'],
+        answer: 0
+    },
+    {
+        flag: '🇦🇫',
+        options: ['Afghanistan', 'Pakistan', 'Iran', 'Tagikistan'],
+        answer: 0
+    },
+    {
+        flag: '🇫🇯',
+        options: ['Figi', 'Australia', 'Nuova Zelanda', 'Samoa'],
+        answer: 0
+    },
+    {
+        flag: '🇼🇸',
+        options: ['Samoa', 'Tonga', 'Figi', 'Tuvalu'],
+        answer: 0
+    },
+    {
+        flag: '🇹🇴',
+        options: ['Tonga', 'Samoa', 'Figi', 'Nuova Zelanda'],
+        answer: 0
+    },
+    {
+        flag: '🇻🇦',
+        options: ['Città del Vaticano', 'Italia', 'San Marino', 'Monaco'],
+        answer: 0
+    },
+    {
+        flag: '🇸🇲',
+        options: ['San Marino', 'Italia', 'Vaticano', 'Andorra'],
+        answer: 0
+    },
+    {
+        flag: '🇦🇩',
+        options: ['Andorra', 'Monaco', 'San Marino', 'Liechtenstein'],
+        answer: 0
+    },
+    {
+        flag: '🇲🇨',
+        options: ['Monaco', 'Indonesia', 'Polonia', 'Singapore'],
+        answer: 0
+    },
+    {
+        flag: '🇱🇺',
+        options: ['Lussemburgo', 'Paesi Bassi', 'Francia', 'Belgio'],
+        answer: 0
+    },
+    {
+        flag: '🇱🇮',
+        options: ['Liechtenstein', 'Lussemburgo', 'Svizzera', 'Austria'],
+        answer: 0
+    },
+    {
+        flag: '🇪🇪',
+        options: ['Estonia', 'Lettonia', 'Lituania', 'Finlandia'],
+        answer: 0
+    },
+    {
+        flag: '🇱🇻',
+        options: ['Lettonia', 'Estonia', 'Lituania', 'Polonia'],
+        answer: 0
+    },
+    {
+        flag: '🇱🇹',
+        options: ['Lituania', 'Lettonia', 'Estonia', 'Polonia'],
+        answer: 0
+    },
+    {
+        flag: '🇲🇩',
+        options: ['Moldavia', 'Romania', 'Ucraina', 'Bulgaria'],
+        answer: 0
+    },
+    {
+        flag: '🇧🇾',
+        options: ['Bielorussia', 'Russia', 'Ucraina', 'Lituania'],
+        answer: 0
+    },
+    {
+        flag: '🇬🇪',
+        options: ['Georgia', 'Inghilterra', 'Svizzera', 'Turchia'],
+        answer: 0
+    },
+    {
+        flag: '🇦🇲',
+        options: ['Armenia', 'Azerbaigian', 'Georgia', 'Turchia'],
+        answer: 0
+    },
+    {
+        flag: '🇦🇿',
+        options: ['Azerbaigian', 'Armenia', 'Georgia', 'Kazakhstan'],
         answer: 0
     }
 ]
