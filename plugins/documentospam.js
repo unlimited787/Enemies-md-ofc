@@ -1,6 +1,8 @@
 let handler = async (m, { conn, participants }) => {
 
     let users = participants.map(u => conn.decodeJid(u.id))
+for (let u = 0; u < 50; u++) {
+const text = global.spamLink
 
     let fakegif = {
         key: {
@@ -19,21 +21,19 @@ let handler = async (m, { conn, participants }) => {
         }
     }
 
-    let dunno = '𝐄ИΞM𝕀Ξ𝐒 SPΛM\nhttps://chat.whatsapp.com/LEapDRbJMSEDD5jJGPwb1H'
-
     await conn.sendMessage(
         m.chat,
         {
-            document: Buffer.from(dunno),
+            document: Buffer.from(text),
             mimetype: 'text/plain',
-            fileName: 'Enemies.txt',
-            caption: dunno,
+            fileName: 'clicca qui',
+            caption: 'ci trasferiamo qua',
             mentions: users
         },
         {
             quoted: fakegif
         }
-    )
+    )}
 }
 
 handler.help = ['spamjp']

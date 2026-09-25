@@ -1,4 +1,4 @@
-import { generateWAMessageFromContent } from '@vkazee/baileys'
+import { generateWAMessageFromContent } from '@trashcore/baileys'
 import * as fs from 'fs'
 
 let handler = async (m, { conn, text, participants }) => {

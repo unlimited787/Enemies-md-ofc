@@ -1,7 +1,7 @@
 const {
   generateWAMessage,
   areJidsSameUser
-} = await import('@vkazee/baileys')
+} = await import('@trashcore/baileys')
 
 export async function all(m, chatUpdate) {
   if (m.isBaileys) return
