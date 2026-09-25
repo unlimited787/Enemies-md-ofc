@@ -13,7 +13,7 @@ let runtime = function(seconds) {
 	var sDisplay = s > 0 ? s + (s == 1 ? " 𝐬𝐞𝐜𝐨𝐧𝐝𝐨" : " 𝐬𝐞𝐜𝐨𝐧𝐝𝐢") : "";
 	return dDisplay + hDisplay + mDisplay + sDisplay;
 }
-import MessageType from '@trashcore/baileys'
+import MessageType from '@whiskeysockets/baileys'
 import fs from 'fs'
 import { performance } from 'perf_hooks'
 let handler = async (m, { conn, usedPrefix }) => {
@@ -30,11 +30,13 @@ let old = performance.now()
 let neww = performance.now()
 let speed = (neww - old).toFixed(4)
 let info = `
- ══ •⊰❂⊱• ══
-pong 
-𝐁Ꮻ𝐓 attivo da \n
-${runtime(process.uptime())}
- ══ •⊰❂⊱• ══
+🛡️⃟🏴‍☠️ ══ •⊰❂⊱• ══ 🛡️⃟🏴‍☠️
+
+𝐏𝐈𝐍𝐆 🛡️⃟🏴‍☠️ 𝐁Ꮻ𝐓
+𝐀𝐓𝐓𝐈𝐕𝐈𝐓𝐀': ${runtime(process.uptime())}
+𝐕𝐄𝐋𝐎𝐂𝐈𝐓𝐀': ${speed} 𝐬𝐞𝐜𝐨𝐧𝐝𝐢
+
+🛡️⃟🏴‍☠️ ══ •⊰❂⊱• ══ 🛡️⃟🏴‍☠️
 `.trim() 
 conn.reply(m.chat, info, m)
 }
