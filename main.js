@@ -159,7 +159,7 @@ const {
     Browsers,
     jidNormalizedUser,
     DisconnectReason
-} = await import('@vkazee/baileys');
+} = await import('@trashcore/baileys');
 
 const {
     chain
