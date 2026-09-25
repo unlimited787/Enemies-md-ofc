@@ -1,4 +1,4 @@
-import quizData from './quiz-data.js'
+import quizData from './quiz.js'
 
 const activeQuizzes = new Map()
 
