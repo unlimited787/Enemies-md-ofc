@@ -73,10 +73,10 @@ activeQuizzes.set(chat, game)
 const text =
 `🧠 *QUIZ*\n\n` +
 `❓ ${question.question}\n\n` +
-`🅰️ ${question.options[0]}\n` +
-`🅱️ ${question.options[1]}\n` +
-`🇨 ${question.options[2]}\n` +
-`🇩 ${question.options[3]}\n\n` +
+`🅰 ${question.options[0]}\n` +
+`🅱 ${question.options[1]}\n` +
+`🅲 ${question.options[2]}\n` +
+`🅳 ${question.options[3]}\n\n` +
 `⏱️ Hai *30 secondi* per rispondere.\n` +
 `👉 Rispondi con *A, B, C o D*.`
 
