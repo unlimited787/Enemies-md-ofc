@@ -68,12 +68,10 @@ const parole = [
     'cavallo',
     'scimmia',
     'serpente',
-    'telefono',
     'fotografia',
     'videocamera',
     'batteria',
     'caricatore',
-    'internet',
     'server',
     'database',
     'software',
@@ -97,8 +95,7 @@ const parole = [
     'scienza',
     'matematica',
     'letteratura',
-    'filosofia',
-    'universita'
+    'filosofia'
 ]
 
 const partite = new Map()
@@ -120,7 +117,10 @@ function creaMaschera(parola, lettere) {
 }
 
 function statoPartita(partita) {
-    const maschera = creaMaschera(partita.parola, partita.lettere)
+    const maschera = creaMaschera(
+        partita.parola,
+        partita.lettere
+    )
 
     const errori = partita.errori.length
     const rimasti = MAX_ERRORI - errori
@@ -131,8 +131,10 @@ function statoPartita(partita) {
         `❌ Errori: *${errori}/${MAX_ERRORI}*\n` +
         `❤️ Tentativi rimasti: *${rimasti}*\n\n` +
         `🔡 Lettere usate:\n` +
-        `${partita.usate.length ? partita.usate.map(x => x.toUpperCase()).join(', ') : 'Nessuna'}\n\n` +
-        `👉 Invia una lettera per giocare.\n` +
+        `${partita.usate.length
+            ? partita.usate.map(x => x.toUpperCase()).join(', ')
+            : 'Nessuna'}\n\n` +
+        `👉 Rispondi *citando questo messaggio* con una lettera.\n` +
         `💡 Puoi anche provare direttamente la parola.`
     )
 }
@@ -168,21 +170,34 @@ let handler = async (m, { conn }) => {
         lettere: new Set(),
         usate: [],
         errori: [],
-        startedBy: m.sender
+        startedBy: m.sender,
+        messageId: null
     }
 
-    partite.set(chat, partita)
-
-    await conn.reply(
+    /*
+     * Mandiamo il messaggio iniziale e salviamo
+     * l'ID del messaggio.
+     */
+    const sent = await conn.reply(
         chat,
         `🎮 *NUOVA PARTITA: IMPICCATO!*\n\n` +
         `Indovina la parola!\n\n` +
         `${'⬜ '.repeat(parola.length).trim()}\n\n` +
         `❌ Hai *${MAX_ERRORI} errori* disponibili.\n\n` +
-        `👉 Invia una *lettera* alla volta.\n` +
+        `👉 Per giocare devi *rispondere citando questo messaggio*.\n` +
+        `🔤 Invia una lettera alla volta.\n` +
         `💡 Oppure prova direttamente a indovinare la parola!`,
         m
     )
+
+    /*
+     * Salviamo l'ID del messaggio dell'impiccato.
+     */
+    if (sent?.key?.id) {
+        partita.messageId = sent.key.id
+    }
+
+    partite.set(chat, partita)
 }
 
 handler.before = async function (m, { conn }) {
@@ -192,6 +207,24 @@ handler.before = async function (m, { conn }) {
     const partita = partite.get(chat)
 
     if (!partita) return
+
+    /*
+     * IMPORTANTE:
+     *
+     * Il messaggio viene considerato un tentativo
+     * SOLO se è una risposta QUOTATA al messaggio
+     * originale dell'Impiccato.
+     */
+
+    if (!m.quoted) return
+
+    const quotedId =
+        m.quoted?.id ||
+        m.quoted?.key?.id
+
+    if (!quotedId) return
+
+    if (quotedId !== partita.messageId) return
 
     if (typeof m.text !== 'string') return
 
@@ -229,7 +262,7 @@ handler.before = async function (m, { conn }) {
             return conn.reply(
                 chat,
                 `💀 *SEI STATO IMPICCATO!*\n\n` +
-                `❌ Hai sbagliato la parola.\n\n` +
+                `❌ Hai esaurito i tentativi.\n\n` +
                 `✅ La parola era:\n` +
                 `*${partita.parola.toUpperCase()}*`,
                 m
