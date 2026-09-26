@@ -113,7 +113,7 @@ let info = `
 │⭔ ${usedPrefix}abbraccio @
 │⭔ ${usedPrefix}amore @
 │⭔ ${usedPrefix}andre (AI)
-│⭔ ${usedPrefix}wikipedia (txt)⚠️
+│⭔ ${usedPrefix}wikipedia 
 │⭔ ${usedPrefix}dox @
 │⭔ ${usedPrefix}topgays
 │⭔ ${usedPrefix}topnazi
