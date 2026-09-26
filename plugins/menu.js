@@ -25,8 +25,8 @@ let info = `
 │⭔ ${usedPrefix}kick / addio / ban @
 │⭔ ${usedPrefix}warn / unwarn @
 │⭔ ${usedPrefix}del (msg)
-│⭔ ${usedPrefix}stermina +92 ⚠️
-│⭔ ${usedPrefix}listanum +1 ⚠️
+│⭔ ${usedPrefix}stermina +92 
+│⭔ ${usedPrefix}listanum +1 
 │⭔ ${usedPrefix}link
 │⭔ ${usedPrefix}reimposta
 │⭔ ${usedPrefix}hidetag (txt) ⚠️
