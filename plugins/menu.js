@@ -128,10 +128,9 @@ let info = `
 ✦✧ ═ •⊰❂⊱• ═ ✧✦
 
 ┌──⭓ 𝐏𝐑𝐎𝐏𝐑𝐈𝐄𝐓𝐀𝐑𝐈𝐎 👤
-│⭔ ${usedPrefix}setowner (+39)
+│⭔ ${usedPrefix}setowner (39)
 │⭔ ${usedPrefix}menuspam
 │⭔ ${usedPrefix}attiva/disabilita restrict
-│⭔ ${usedPrefix}attiva/disabilita antiprivato⚠️
 │⭔ ${usedPrefix}attiva/disabilita sologruppo
 │⭔ ${usedPrefix}attiva/disabilita autoread
 │⭔ ${usedPrefix}prefisso (nuovo prefisso)
