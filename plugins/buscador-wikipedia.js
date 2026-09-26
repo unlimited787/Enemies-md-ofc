@@ -54,7 +54,7 @@ let handler = async (m, { conn, text }) => {
 
     } catch (e) {
         return
-        )
+        
     }
 }
 
