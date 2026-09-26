@@ -1,35 +1,70 @@
-import axios from "axios"
-import fetch from "node-fetch"
-import cheerio from "cheerio"
-async function wikipedia(querry) {
-try {
-const link = await axios.get(`https://it.wikipedia.org/wiki/${querry}`)
-const $ = cheerio.load(link.data)
-let judul = $('#firstHeading').text().trim()
-let thumb = $('#mw-content-text').find('div.mw-parser-output > div:nth-child(1) > table > tbody > tr:nth-child(2) > td > a > img').attr('src') || `//i.ibb.co/nzqPBpC/http-error-404-not-found.png`
-let isi = []
-$('#mw-content-text > div.mw-parser-output').each(function (rayy, Ra) {
-let penjelasan = $(Ra).find('p').text().trim() 
-isi.push(penjelasan)})
-for (let i of isi) {
-const data = {
-status: link.status,
-result: {
-judul: judul,
-thumb: 'https:' + thumb,
-isi: i}}
-return data}
-} catch (err) {
-var notFond = {
-status: link.status,
-Pesan: eror}
-return notFond}}
-let handler = async (m, { conn, text, usedPrefix, command }) => {
-if (!text) return
-wikipedia(`${text}`).then(res => {
-m.reply(res.result.isi)
-}).catch(() => { return })}
-handler.help = ['wikipedia'].map(v => v + ' <apa>')
-handler.tags = [ 'internet']
+import axios from 'axios'
+
+async function wikipedia(query) {
+    try {
+        const title = encodeURIComponent(query.trim())
+
+        const { data } = await axios.get(
+            `https://it.wikipedia.org/api/rest_v1/page/summary/${title}`,
+            {
+                headers: {
+                    'User-Agent': 'EnemiesBot/1.0'
+                },
+                timeout: 10000
+            }
+        )
+
+        if (!data || data.type === 'https://mediawiki.org/wiki/HyperSwitch/errors/bad_request') {
+            throw new Error('Pagina Wikipedia non trovata')
+        }
+
+        return {
+            status: 200,
+            result: {
+                judul: data.title || query,
+                thumb:
+                    data.thumbnail?.source ||
+                    'https://i.ibb.co/nzqPBpC/http-error-404-not-found.png',
+                isi:
+                    data.extract ||
+                    'Nessuna descrizione disponibile.'
+            }
+        }
+
+    } catch (err) {
+        throw new Error(
+            err?.response?.data?.detail ||
+            err?.message ||
+            'Errore durante la ricerca su Wikipedia'
+        )
+    }
+}
+
+let handler = async (m, { conn, text }) => {
+    if (!text) return
+
+    try {
+        const res = await wikipedia(text)
+
+        await m.reply(
+            `📚 *Wikipedia*\n\n` +
+            `*${res.result.judul}*\n\n` +
+            res.result.isi
+        )
+
+    } catch (e) {
+        return
+        )
+    }
+}
+
+handler.help = [
+    'wiki <ricerca>',
+    'wikipedia <ricerca>'
+]
+
+handler.tags = ['internet']
+
 handler.command = /^(wiki|wikipedia)$/i
+
 export default handler
