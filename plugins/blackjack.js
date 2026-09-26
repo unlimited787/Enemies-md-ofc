@@ -1,7 +1,7 @@
 // plugins/blackjack.js
 // BLACKJACK MULTIPLAYER - SINGLE PLUGIN
-// Tutto incluso: fiches, turni, hit, stand, double, split,
-// blackjack, assicurazione, dealer, saldo, join, leave e nuova partita.
+// Fiches, multiplayer, hit, stand, double, split, insurance,
+// blackjack naturale, dealer, saldo, join, leave, start, cancel.
 
 const games = new Map()
 const balances = new Map()
@@ -9,8 +9,10 @@ const balances = new Map()
 const START_BALANCE = 1000
 const MIN_BET = 10
 const MAX_BET = 1000000
+const MAX_PLAYERS = 6
 
 const SUITS = ['♠️', '♥️', '♦️', '♣️']
+
 const RANKS = [
     { name: 'A', value: 11 },
     { name: '2', value: 2 },
@@ -27,36 +29,56 @@ const RANKS = [
     { name: 'K', value: 10 }
 ]
 
-const sleep = ms => new Promise(resolve => setTimeout(resolve, ms))
+/*
+ * IMPORTANTE:
+ * Non tocchiamo il sistema JID/LID globale del bot.
+ *
+ * Qui usiamo solo una chiave locale per identificare
+ * il giocatore della partita.
+ *
+ * NON convertiamo @lid in @s.whatsapp.net.
+ */
+function playerId(m) {
+    const id = String(
+        m?.sender ||
+        m?.participant ||
+        m?.key?.participant ||
+        ''
+    )
 
-function getBalance(user) {
-    if (!balances.has(user)) {
-        balances.set(user, START_BALANCE)
+    if (!id) return ''
+
+    // Elimina solamente l'eventuale device ID.
+    return id.replace(/:\d+(?=@)/, '')
+}
+
+function playerName(m) {
+    return (
+        m?.pushName ||
+        m?.name ||
+        String(m?.sender || '').split('@')[0] ||
+        'Giocatore'
+    )
+}
+
+function getBalance(jid) {
+    if (!balances.has(jid)) {
+        balances.set(jid, START_BALANCE)
     }
 
-    return balances.get(user)
+    return balances.get(jid)
 }
 
-function setBalance(user, amount) {
-    balances.set(user, Math.max(0, Math.floor(amount)))
+function setBalance(jid, amount) {
+    balances.set(jid, Math.max(0, Math.floor(amount)))
 }
 
-function addBalance(user, amount) {
-    setBalance(user, getBalance(user) + amount)
+function addBalance(jid, amount) {
+    setBalance(jid, getBalance(jid) + amount)
 }
 
-function normalizeJid(jid = '') {
-    return String(jid)
-        .replace(/:\d+(?=@)/, '')
-        .replace(/@lid$/, '@s.whatsapp.net')
-}
-
-function getUserId(m) {
-    return normalizeJid(m.sender || m.participant || '')
-}
-
-function userName(m) {
-    return m.pushName || m.name || m.sender?.split('@')[0] || 'Giocatore'
+function money(amount) {
+    return `${Math.floor(amount).toLocaleString('it-IT')} 🪙`
 }
 
 function createDeck() {
@@ -72,7 +94,7 @@ function createDeck() {
         }
     }
 
-    // Mischia Fisher-Yates
+    // Fisher-Yates
     for (let i = deck.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1))
 
@@ -84,8 +106,26 @@ function createDeck() {
     return deck
 }
 
+function drawCard(game) {
+    if (!game.deck.length) {
+        game.deck = createDeck()
+    }
+
+    return game.deck.pop()
+}
+
 function cardText(card) {
     return `${card.rank}${card.suit}`
+}
+
+function formatHand(hand, hidden = false) {
+    if (!hand?.length) return '—'
+
+    if (hidden) {
+        return `🂠  ${cardText(hand[1])}`
+    }
+
+    return hand.map(cardText).join('  ')
 }
 
 function handValue(hand) {
@@ -126,56 +166,6 @@ function canDouble(hand) {
     return hand.length === 2
 }
 
-function formatHand(hand, hidden = false) {
-    if (hidden) {
-        if (!hand.length) return '—'
-
-        return `🂠  ${cardText(hand[1])}`
-    }
-
-    return hand.map(cardText).join('  ')
-}
-
-function money(amount) {
-    return `${Math.floor(amount).toLocaleString('it-IT')} 🪙`
-}
-
-function getGame(chat) {
-    return games.get(chat)
-}
-
-function activePlayers(game) {
-    return [...game.players.values()]
-}
-
-function currentPlayer(game) {
-    if (!game.turnOrder.length) return null
-
-    return game.players.get(
-        game.turnOrder[game.currentTurn]
-    )
-}
-
-function removePlayer(game, jid) {
-    game.players.delete(jid)
-
-    game.turnOrder = game.turnOrder.filter(
-        x => x !== jid
-    )
-
-    if (game.currentTurn >= game.turnOrder.length) {
-        game.currentTurn = 0
-    }
-}
-
-function drawCard(game) {
-    if (!game.deck.length) {
-        game.deck = createDeck()
-    }
-
-    return game.deck.pop()
-}
-
 function createHand(bet) {
     return {
         cards: [],
@@ -200,8 +190,32 @@ function createPlayer(jid, name, bet) {
     }
 }
 
+function activePlayers(game) {
+    return [...game.players.values()]
+}
+
 function activeHand(player) {
     return player.hands[player.activeHand]
+}
+
+function currentPlayer(game) {
+    if (!game.turnOrder.length) return null
+
+    return game.players.get(
+        game.turnOrder[game.currentTurn]
+    ) || null
+}
+
+function playerCanAct(game, jid) {
+    if (!game) return false
+    if (game.phase !== 'playing') return false
+
+    const player = game.players.get(jid)
+
+    if (!player) return false
+    if (player.done) return false
+
+    return game.turnOrder[game.currentTurn] === jid
 }
 
 function nextHand(player) {
@@ -213,35 +227,6 @@ function nextHand(player) {
     }
 
     return true
-}
-
-function allPlayersDone(game) {
-    return activePlayers(game).every(
-        player => player.done
-    )
-}
-
-function dealerShouldHit(hand) {
-    const value = handValue(hand)
-
-    // Dealer sta su 17
-    return value < 17
-}
-
-function dealerPlay(game) {
-    while (dealerShouldHit(game.dealer)) {
-        game.dealer.push(drawCard(game))
-    }
-}
-
-function playerCanAct(game, jid) {
-    const player = game.players.get(jid)
-
-    if (!player) return false
-    if (game.phase !== 'playing') return false
-    if (player.done) return false
-
-    return game.turnOrder[game.currentTurn] === jid
 }
 
 function nextTurn(game) {
@@ -267,9 +252,11 @@ function nextTurn(game) {
 }
 
 function prepareNextPlayablePlayer(game) {
+    if (!game.turnOrder.length) return null
+
     let safety = 0
 
-    while (safety < game.turnOrder.length + 5) {
+    while (safety < game.turnOrder.length + 10) {
         const player = currentPlayer(game)
 
         if (player && !player.done) {
@@ -288,12 +275,117 @@ function prepareNextPlayablePlayer(game) {
     return null
 }
 
-function gameHeader(game) {
-    return (
-        `🃏 *BLACKJACK*\n` +
-        `━━━━━━━━━━━━━━━━━━\n` +
-        `💰 Banco: ${money(game.dealer.length)}\n\n`
+function dealerShouldHit(hand) {
+    return handValue(hand) < 17
+}
+
+function dealerPlay(game) {
+    while (dealerShouldHit(game.dealer)) {
+        game.dealer.push(drawCard(game))
+    }
+}
+
+function parseAmount(value) {
+    if (value === undefined || value === null) {
+        return null
+    }
+
+    const amount = Number(
+        String(value)
+            .replace(/[€$£,_]/g, '')
+            .replace(',', '.')
     )
+
+    if (!Number.isFinite(amount)) {
+        return null
+    }
+
+    return Math.floor(amount)
+}
+
+/* =========================
+   MESSAGGI
+========================= */
+
+function rememberMessage(game, message) {
+    const id = message?.key?.id
+
+    if (!id) return
+
+    if (!game.messageIds) {
+        game.messageIds = new Set()
+    }
+
+    game.messageIds.add(id)
+
+    while (game.messageIds.size > 20) {
+        const first = game.messageIds.values().next().value
+
+        if (!first) break
+
+        game.messageIds.delete(first)
+    }
+}
+
+async function sendGame(conn, chat, game, text) {
+    const sent = await conn.sendMessage(
+        chat,
+        { text },
+        game.lastMessage
+            ? { quoted: game.lastMessage }
+            : {}
+    )
+
+    game.lastMessage = sent
+    rememberMessage(game, sent)
+
+    return sent
+}
+
+async function reply(conn, chat, text, quoted = null) {
+    return conn.reply(
+        chat,
+        text,
+        quoted || undefined
+    )
+}
+
+/* =========================
+   RENDER
+========================= */
+
+function renderWaiting(game) {
+    let text =
+        `🃏 *BLACKJACK*\n` +
+        `━━━━━━━━━━━━━━━━━━\n\n` +
+        `🎰 *TAVOLO APERTO*\n\n`
+
+    text +=
+        `👑 Host: *${game.hostName}*\n\n` +
+        `👥 Giocatori: *${game.players.size}/${MAX_PLAYERS}*\n\n`
+
+    if (!game.players.size) {
+        text += `Nessun giocatore ancora entrato.\n\n`
+    } else {
+        for (const player of activePlayers(game)) {
+            text +=
+                `👤 *${player.name}*\n` +
+                `   💰 Puntata: *${money(player.hands[0].bet)}*\n\n`
+        }
+    }
+
+    text +=
+        `━━━━━━━━━━━━━━━━━━\n` +
+        `Per entrare:\n` +
+        `*.bj join 100*\n\n` +
+        `Quando siete pronti, l'host usa:\n` +
+        `*.bj start*\n\n` +
+        `Per uscire:\n` +
+        `*.bj leave*\n\n` +
+        `Per annullare:\n` +
+        `*.bj cancel*`
+
+    return text
 }
 
 function renderGame(game, revealDealer = false) {
@@ -301,14 +393,14 @@ function renderGame(game, revealDealer = false) {
         `🃏 *BLACKJACK*\n` +
         `━━━━━━━━━━━━━━━━━━\n\n`
 
+    text += `🎩 *BANCO*\n`
+
     if (revealDealer) {
         text +=
-            `🎩 *BANCO*\n` +
             `${formatHand(game.dealer)}\n` +
             `💠 Totale: *${handValue(game.dealer)}*\n\n`
     } else {
         text +=
-            `🎩 *BANCO*\n` +
             `${formatHand(game.dealer, true)}\n` +
             `❓ Totale nascosto\n\n`
     }
@@ -322,9 +414,9 @@ function renderGame(game, revealDealer = false) {
             const value = handValue(hand)
 
             text +=
-                `  ${player.hands.length > 1 ? `Mano ${index + 1}: ` : ''}` +
+                `  ${player.hands.length > 1 ? `*Mano ${index + 1}:* ` : ''}` +
                 `${formatHand(hand)}\n` +
-                `  💠 ${value > 21 ? `💥 ${value}` : value}` +
+                `  💠 ${value > 21 ? `💥 ${value}` : value}\n` +
                 `  💰 ${money(hand.bet)}`
 
             if (hand.doubled) {
@@ -332,20 +424,21 @@ function renderGame(game, revealDealer = false) {
             }
 
             if (hand.finished) {
-                text += `  ✓`
+                text += ` ✓`
+            }
+
+            if (hand.insurance > 0) {
+                text +=
+                    `\n  🛡️ Assicurazione: ${money(hand.insurance)}`
             }
 
             text += `\n`
-
-            if (hand.insurance > 0) {
-                text += `  🛡️ Assicurazione: ${money(hand.insurance)}\n`
-            }
         })
 
         text += `\n`
     }
 
-    if (!revealDealer) {
+    if (!revealDealer && game.phase === 'playing') {
         const player = currentPlayer(game)
 
         if (player) {
@@ -359,14 +452,16 @@ function renderGame(game, revealDealer = false) {
                 `🛑 *.bj stand* — Stai\n`
 
             if (canDouble(hand)) {
-                text += `💰 *.bj double* — Raddoppia\n`
+                text +=
+                    `💰 *.bj double* — Raddoppia\n`
             }
 
             if (
                 canSplit(hand) &&
                 player.hands.length < 4
             ) {
-                text += `✂️ *.bj split* — Dividi\n`
+                text +=
+                    `✂️ *.bj split* — Dividi\n`
             }
 
             if (
@@ -374,7 +469,8 @@ function renderGame(game, revealDealer = false) {
                 hand.cards.length === 2 &&
                 hand.insurance === 0
             ) {
-                text += `🛡️ *.bj insurance* — Assicurazione\n`
+                text +=
+                    `🛡️ *.bj insurance* — Assicurazione\n`
             }
         }
     }
@@ -388,6 +484,7 @@ function resultsText(game) {
         `🏁 *RISULTATI*\n\n`
 
     const dealerValue = handValue(game.dealer)
+    const dealerBJ = isBlackjack(game.dealer)
 
     for (const player of activePlayers(game)) {
         text += `👤 *${player.name}*\n`
@@ -399,7 +496,7 @@ function resultsText(game) {
             let payout = 0
 
             if (isBlackjack(hand)) {
-                if (isBlackjack(game.dealer)) {
+                if (dealerBJ) {
                     result = '🤝 PAREGGIO'
                     payout = hand.bet
                 } else {
@@ -409,7 +506,7 @@ function resultsText(game) {
             } else if (playerValue > 21) {
                 result = '💥 SBANCATO'
                 payout = 0
-            } else if (isBlackjack(game.dealer)) {
+            } else if (dealerBJ) {
                 result = '❌ PERDI'
                 payout = 0
             } else if (dealerValue > 21) {
@@ -428,15 +525,20 @@ function resultsText(game) {
 
             // Assicurazione
             if (hand.insurance > 0) {
-                if (isBlackjack(game.dealer)) {
-                    payout += hand.insurance * 3
-                    text += `  🛡️ Assicurazione: *VINTA* +${money(hand.insurance * 3)}\n`
+                if (dealerBJ) {
+                    const insurancePayout =
+                        hand.insurance * 3
+
+                    payout += insurancePayout
+
+                    text +=
+                        `  🛡️ Assicurazione: *VINTA* ` +
+                        `+${money(insurancePayout)}\n`
                 } else {
-                    text += `  🛡️ Assicurazione: *PERSA* -${money(hand.insurance)}\n`
+                    text +=
+                        `  🛡️ Assicurazione: *PERSA*\n`
                 }
             }
-
-            const oldBalance = getBalance(player.jid)
 
             addBalance(
                 player.jid,
@@ -447,7 +549,9 @@ function resultsText(game) {
             hand.payout = payout
 
             text +=
-                `${player.hands.length > 1 ? `  Mano ${index + 1}: ` : '  '}` +
+                `${player.hands.length > 1
+                    ? `  *Mano ${index + 1}:* `
+                    : '  '}` +
                 `${result}\n` +
                 `  🃏 ${formatHand(hand)}\n` +
                 `  💠 Totale: *${playerValue}*\n` +
@@ -464,128 +568,11 @@ function resultsText(game) {
     return text
 }
 
-function helpText() {
-    return (
-        `🃏 *BLACKJACK — COMANDI*\n\n` +
+/* =========================
+   START
+========================= */
 
-        `🎰 *.blackjack* / *.bj*\n` +
-        `Avvia una nuova partita.\n\n` +
-
-        `👥 *.bj join 100*\n` +
-        `Entra nella partita con 100 fiches.\n\n` +
-
-        `🚪 *.bj leave*\n` +
-        `Esci dalla partita prima dell'inizio.\n\n` +
-
-        `🃏 *.bj hit*\n` +
-        `Pesca una carta.\n\n` +
-
-        `🛑 *.bj stand*\n` +
-        `Passa il turno.\n\n` +
-
-        `💰 *.bj double*\n` +
-        `Raddoppia la puntata e pesca una sola carta.\n\n` +
-
-        `✂️ *.bj split*\n` +
-        `Divide una coppia in due mani.\n\n` +
-
-        `🛡️ *.bj insurance*\n` +
-        `Compra l'assicurazione se il banco mostra un Asso.\n\n` +
-
-        `💼 *.bj saldo*\n` +
-        `Mostra le tue fiches.\n\n` +
-
-        `🏆 *.bj players*\n` +
-        `Mostra i giocatori della partita.\n\n` +
-
-        `❌ *.bj cancel*\n` +
-        `Annulla la partita.\n\n` +
-
-        `🎲 Puntata minima: *${MIN_BET}*\n` +
-        `🎲 Saldo iniziale: *${START_BALANCE}*`
-    )
-}
-
-async function sendGame(conn, chat, game, extra = '') {
-    const text =
-        renderGame(game, false) +
-        (extra ? `\n${extra}` : '')
-
-    const sent = await conn.sendMessage(
-        chat,
-        { text },
-        game.lastMessage
-            ? { quoted: game.lastMessage }
-            : {}
-    )
-
-    game.lastMessage = sent
-
-    return sent
-}
-
-async function sendResult(conn, chat, game) {
-    const text =
-        renderGame(game, true) +
-        resultsText(game)
-
-    const sent = await conn.sendMessage(
-        chat,
-        { text },
-        game.lastMessage
-            ? { quoted: game.lastMessage }
-            : {}
-    )
-
-    game.lastMessage = sent
-
-    return sent
-}
-
-async function finishGame(conn, chat, game) {
-    if (game.phase === 'finished') return
-
-    game.phase = 'dealer'
-
-    dealerPlay(game)
-
-    game.phase = 'finished'
-
-    await sendResult(conn, chat, game)
-
-    games.delete(chat)
-}
-
-async function startPlaying(conn, chat, game) {
-    game.phase = 'playing'
-
-    // Controlla blackjack immediato del banco
-    if (isBlackjack(game.dealer)) {
-        await finishGame(conn, chat, game)
-        return
-    }
-
-    // Controlla blackjack immediato dei giocatori
-    for (const player of activePlayers(game)) {
-        const hand = activeHand(player)
-
-        if (isBlackjack(hand)) {
-            hand.finished = true
-            player.done = true
-        }
-    }
-
-    const first = prepareNextPlayablePlayer(game)
-
-    if (!first) {
-        await finishGame(conn, chat, game)
-        return
-    }
-
-    await sendGame(conn, chat, game)
-}
-
-async function dealInitialCards(game) {
+function dealInitialCards(game) {
     game.dealer = [
         drawCard(game),
         drawCard(game)
@@ -600,97 +587,19 @@ async function dealInitialCards(game) {
     }
 }
 
-async function startGame(conn, chat, game) {
-    await dealInitialCards(game)
+async function finishGame(conn, chat, game) {
+    if (game.phase === 'finished') return
 
-    await sendGame(
-        conn,
-        chat,
-        game,
-        `🎰 *La partita è iniziata!*\n` +
-        `Gli altri giocatori possono ancora entrare.`
-    )
+    game.phase = 'dealer'
 
-    // Piccola finestra per permettere agli altri di fare join
-    game.joinOpen = true
+    dealerPlay(game)
 
-    setTimeout(async () => {
-        const current = games.get(chat)
+    game.phase = 'finished'
 
-        if (!current || current !== game) return
-        if (current.phase !== 'waiting') return
+    const text =
+        renderGame(game, true) +
+        resultsText(game)
 
-        current.joinOpen = false
-
-        await startPlaying(
-            conn,
-            chat,
-            current
-        )
-    }, 15000)
-}
-
-function parseAmount(value) {
-    const amount = Number(
-        String(value || '')
-            .replace(/[€$£,_]/g, '')
-            .replace(',', '.')
-    )
-
-    if (!Number.isFinite(amount)) {
-        return null
-    }
-
-    return Math.floor(amount)
-}
-
-function isGroup(m) {
-    return !!m.isGroup
-}
-
-function getQuotedId(m) {
-    if (!m?.quoted) return null
-
-    return (
-        m.quoted.id ||
-        m.quoted.key?.id ||
-        m.quoted.key?.messageId ||
-        null
-    )
-}
-
-function isGameQuote(m, game) {
-    if (!m?.quoted) return false
-
-    const quotedId = getQuotedId(m)
-
-    if (!quotedId) return false
-
-    return game.messageIds?.has(quotedId)
-}
-
-function rememberMessage(game, sent) {
-    const id = sent?.key?.id
-
-    if (!id) return
-
-    if (!game.messageIds) {
-        game.messageIds = new Set()
-    }
-
-    game.messageIds.add(id)
-
-    // Manteniamo solo gli ultimi 15 ID
-    while (game.messageIds.size > 15) {
-        const first = game.messageIds.values().next().value
-
-        if (!first) break
-
-        game.messageIds.delete(first)
-    }
-}
-
-async function sendAndRemember(conn, chat, game, text) {
     const sent = await conn.sendMessage(
         chat,
         { text },
@@ -700,17 +609,86 @@ async function sendAndRemember(conn, chat, game, text) {
     )
 
     game.lastMessage = sent
-
     rememberMessage(game, sent)
 
-    return sent
+    games.delete(chat)
 }
+
+async function startGame(conn, chat, game) {
+    if (!game) return
+
+    if (game.phase !== 'waiting') {
+        return
+    }
+
+    if (game.players.size < 1) {
+        return reply(
+            conn,
+            chat,
+            `❌ Serve almeno un giocatore per iniziare.`
+        )
+    }
+
+    game.joinOpen = false
+    game.phase = 'dealing'
+
+    dealInitialCards(game)
+
+    // Assicurazione disponibile se il banco mostra Asso.
+    game.canInsurance =
+        game.dealer[0]?.rank === 'A'
+
+    // Controllo blackjack del banco.
+    if (isBlackjack(game.dealer)) {
+        await finishGame(conn, chat, game)
+        return
+    }
+
+    game.phase = 'playing'
+
+    // I giocatori con blackjack naturale
+    // saltano il turno.
+    for (const player of activePlayers(game)) {
+        const hand = activeHand(player)
+
+        if (isBlackjack(hand)) {
+            hand.finished = true
+            player.done = true
+        }
+    }
+
+    game.currentTurn = 0
+
+    const first = prepareNextPlayablePlayer(game)
+
+    if (!first) {
+        await finishGame(conn, chat, game)
+        return
+    }
+
+    await sendGame(
+        conn,
+        chat,
+        game,
+        `🎰 *LA PARTITA È INIZIATA!*\n\n` +
+        `➡️ Tocca a *${first.name}*.`
+    )
+}
+
+/* =========================
+   HIT
+========================= */
 
 async function handleHit(conn, chat, game, jid) {
     if (!playerCanAct(game, jid)) {
-        return conn.reply(
+        const current = currentPlayer(game)
+
+        return reply(
+            conn,
             chat,
-            `⛔ Non è il tuo turno.`,
+            current
+                ? `⛔ Non è il tuo turno.\n\n🎯 Tocca a *${current.name}*.`
+                : `⛔ Non è il tuo turno.`,
             game.lastMessage
         )
     }
@@ -725,7 +703,9 @@ async function handleHit(conn, chat, game, jid) {
     if (value > 21) {
         hand.finished = true
 
-        if (!nextHand(player)) {
+        const changedHand = nextHand(player)
+
+        if (!changedHand) {
             nextTurn(game)
         }
 
@@ -736,7 +716,7 @@ async function handleHit(conn, chat, game, jid) {
             return
         }
 
-        await sendAndRemember(
+        await sendGame(
             conn,
             chat,
             game,
@@ -750,7 +730,9 @@ async function handleHit(conn, chat, game, jid) {
     if (value === 21) {
         hand.finished = true
 
-        if (!nextHand(player)) {
+        const changedHand = nextHand(player)
+
+        if (!changedHand) {
             nextTurn(game)
         }
 
@@ -761,7 +743,7 @@ async function handleHit(conn, chat, game, jid) {
             return
         }
 
-        await sendAndRemember(
+        await sendGame(
             conn,
             chat,
             game,
@@ -772,21 +754,30 @@ async function handleHit(conn, chat, game, jid) {
         return
     }
 
-    await sendAndRemember(
+    await sendGame(
         conn,
         chat,
         game,
-        `🃏 *${player.name}* pesca:\n` +
-        `${formatHand(hand)}\n\n` +
+        `🃏 *${player.name}* pesca:\n\n` +
+        `${formatHand(hand)}\n` +
         `💠 Totale: *${value}*`
     )
 }
 
+/* =========================
+   STAND
+========================= */
+
 async function handleStand(conn, chat, game, jid) {
     if (!playerCanAct(game, jid)) {
-        return conn.reply(
+        const current = currentPlayer(game)
+
+        return reply(
+            conn,
             chat,
-            `⛔ Non è il tuo turno.`,
+            current
+                ? `⛔ Non è il tuo turno.\n\n🎯 Tocca a *${current.name}*.`
+                : `⛔ Non è il tuo turno.`,
             game.lastMessage
         )
     }
@@ -796,7 +787,9 @@ async function handleStand(conn, chat, game, jid) {
 
     hand.finished = true
 
-    if (!nextHand(player)) {
+    const changedHand = nextHand(player)
+
+    if (!changedHand) {
         nextTurn(game)
     }
 
@@ -807,7 +800,7 @@ async function handleStand(conn, chat, game, jid) {
         return
     }
 
-    await sendAndRemember(
+    await sendGame(
         conn,
         chat,
         game,
@@ -816,11 +809,20 @@ async function handleStand(conn, chat, game, jid) {
     )
 }
 
+/* =========================
+   DOUBLE
+========================= */
+
 async function handleDouble(conn, chat, game, jid) {
     if (!playerCanAct(game, jid)) {
-        return conn.reply(
+        const current = currentPlayer(game)
+
+        return reply(
+            conn,
             chat,
-            `⛔ Non è il tuo turno.`,
+            current
+                ? `⛔ Non è il tuo turno.\n\n🎯 Tocca a *${current.name}*.`
+                : `⛔ Non è il tuo turno.`,
             game.lastMessage
         )
     }
@@ -829,7 +831,8 @@ async function handleDouble(conn, chat, game, jid) {
     const hand = activeHand(player)
 
     if (!canDouble(hand)) {
-        return conn.reply(
+        return reply(
+            conn,
             chat,
             `❌ Puoi fare Double solo con le prime due carte.`,
             game.lastMessage
@@ -837,7 +840,8 @@ async function handleDouble(conn, chat, game, jid) {
     }
 
     if (hand.doubled) {
-        return conn.reply(
+        return reply(
+            conn,
             chat,
             `❌ Hai già raddoppiato.`,
             game.lastMessage
@@ -845,7 +849,8 @@ async function handleDouble(conn, chat, game, jid) {
     }
 
     if (getBalance(jid) < hand.bet) {
-        return conn.reply(
+        return reply(
+            conn,
             chat,
             `❌ Non hai abbastanza fiches per raddoppiare.`,
             game.lastMessage
@@ -861,12 +866,13 @@ async function handleDouble(conn, chat, game, jid) {
     hand.doubled = true
 
     hand.cards.push(drawCard(game))
+    hand.finished = true
 
     const value = handValue(hand)
 
-    hand.finished = true
+    const changedHand = nextHand(player)
 
-    if (!nextHand(player)) {
+    if (!changedHand) {
         nextTurn(game)
     }
 
@@ -877,7 +883,7 @@ async function handleDouble(conn, chat, game, jid) {
         return
     }
 
-    await sendAndRemember(
+    await sendGame(
         conn,
         chat,
         game,
@@ -889,29 +895,39 @@ async function handleDouble(conn, chat, game, jid) {
     )
 }
 
+/* =========================
+   SPLIT
+========================= */
+
 async function handleSplit(conn, chat, game, jid) {
     if (!playerCanAct(game, jid)) {
-        return conn.reply(
+        const current = currentPlayer(game)
+
+        return reply(
+            conn,
             chat,
-            `⛔ Non è il tuo turno.`,
+            current
+                ? `⛔ Non è il tuo turno.\n\n🎯 Tocca a *${current.name}*.`
+                : `⛔ Non è il tuo turno.`,
             game.lastMessage
         )
     }
 
     const player = game.players.get(jid)
+    const hand = activeHand(player)
 
     if (player.hands.length >= 4) {
-        return conn.reply(
+        return reply(
+            conn,
             chat,
             `❌ Puoi avere al massimo 4 mani.`,
             game.lastMessage
         )
     }
 
-    const hand = activeHand(player)
-
     if (!canSplit(hand)) {
-        return conn.reply(
+        return reply(
+            conn,
             chat,
             `❌ Puoi dividere solo una coppia dello stesso valore.`,
             game.lastMessage
@@ -919,13 +935,15 @@ async function handleSplit(conn, chat, game, jid) {
     }
 
     if (getBalance(jid) < hand.bet) {
-        return conn.reply(
+        return reply(
+            conn,
             chat,
             `❌ Non hai abbastanza fiches per lo split.`,
             game.lastMessage
         )
     }
 
+    // Seconda puntata
     setBalance(
         jid,
         getBalance(jid) - hand.bet
@@ -934,25 +952,18 @@ async function handleSplit(conn, chat, game, jid) {
     const card1 = hand.cards[0]
     const card2 = hand.cards[1]
 
-    const firstHand = {
-        cards: [card1, drawCard(game)],
-        bet: hand.bet,
-        insurance: 0,
-        doubled: false,
-        finished: false,
-        result: null,
-        payout: 0
-    }
+    const firstHand = createHand(hand.bet)
+    const secondHand = createHand(hand.bet)
 
-    const secondHand = {
-        cards: [card2, drawCard(game)],
-        bet: hand.bet,
-        insurance: 0,
-        doubled: false,
-        finished: false,
-        result: null,
-        payout: 0
-    }
+    firstHand.cards = [
+        card1,
+        drawCard(game)
+    ]
+
+    secondHand.cards = [
+        card2,
+        drawCard(game)
+    ]
 
     player.hands.splice(
         player.activeHand,
@@ -961,7 +972,7 @@ async function handleSplit(conn, chat, game, jid) {
         secondHand
     )
 
-    await sendAndRemember(
+    await sendGame(
         conn,
         chat,
         game,
@@ -974,17 +985,27 @@ async function handleSplit(conn, chat, game, jid) {
     )
 }
 
+/* =========================
+   INSURANCE
+========================= */
+
 async function handleInsurance(conn, chat, game, jid) {
     if (!playerCanAct(game, jid)) {
-        return conn.reply(
+        const current = currentPlayer(game)
+
+        return reply(
+            conn,
             chat,
-            `⛔ Non è il tuo turno.`,
+            current
+                ? `⛔ Non è il tuo turno.\n\n🎯 Tocca a *${current.name}*.`
+                : `⛔ Non è il tuo turno.`,
             game.lastMessage
         )
     }
 
     if (!game.canInsurance) {
-        return conn.reply(
+        return reply(
+            conn,
             chat,
             `❌ L'assicurazione non è disponibile.`,
             game.lastMessage
@@ -995,7 +1016,8 @@ async function handleInsurance(conn, chat, game, jid) {
     const hand = activeHand(player)
 
     if (hand.cards.length !== 2) {
-        return conn.reply(
+        return reply(
+            conn,
             chat,
             `❌ Puoi comprare l'assicurazione solo all'inizio della mano.`,
             game.lastMessage
@@ -1003,7 +1025,8 @@ async function handleInsurance(conn, chat, game, jid) {
     }
 
     if (hand.insurance > 0) {
-        return conn.reply(
+        return reply(
+            conn,
             chat,
             `❌ Hai già acquistato l'assicurazione.`,
             game.lastMessage
@@ -1013,9 +1036,10 @@ async function handleInsurance(conn, chat, game, jid) {
     const amount = Math.floor(hand.bet / 2)
 
     if (getBalance(jid) < amount) {
-        return conn.reply(
+        return reply(
+            conn,
             chat,
-            `❌ Non hai abbastanza fiches per l'assicurazione.\n` +
+            `❌ Non hai abbastanza fiches.\n\n` +
             `Servono: *${money(amount)}*`,
             game.lastMessage
         )
@@ -1028,7 +1052,7 @@ async function handleInsurance(conn, chat, game, jid) {
 
     hand.insurance = amount
 
-    await sendAndRemember(
+    await sendGame(
         conn,
         chat,
         game,
@@ -1038,26 +1062,84 @@ async function handleInsurance(conn, chat, game, jid) {
     )
 }
 
+/* =========================
+   HELP
+========================= */
+
+function helpText() {
+    return (
+        `🃏 *BLACKJACK — COMANDI*\n\n` +
+
+        `🎰 *.blackjack* / *.bj*\n` +
+        `Apre un nuovo tavolo.\n\n` +
+
+        `👥 *.bj join 100*\n` +
+        `Entra con una puntata di 100 fiches.\n\n` +
+
+        `▶️ *.bj start*\n` +
+        `Fa partire la partita.\n` +
+        `Solo chi ha creato il tavolo.\n\n` +
+
+        `🚪 *.bj leave*\n` +
+        `Esci prima dell'inizio.\n\n` +
+
+        `🃏 *.bj hit*\n` +
+        `Pesca una carta.\n\n` +
+
+        `🛑 *.bj stand*\n` +
+        `Passa.\n\n` +
+
+        `💰 *.bj double*\n` +
+        `Raddoppia la puntata e pesca una carta.\n\n` +
+
+        `✂️ *.bj split*\n` +
+        `Divide una coppia.\n\n` +
+
+        `🛡️ *.bj insurance*\n` +
+        `Assicurazione contro il blackjack del banco.\n\n` +
+
+        `💼 *.bj saldo*\n` +
+        `Mostra le tue fiches.\n\n` +
+
+        `🏆 *.bj players*\n` +
+        `Mostra i giocatori.\n\n` +
+
+        `❌ *.bj cancel*\n` +
+        `Annulla il tavolo.\n\n` +
+
+        `🎲 Minimo: *${MIN_BET}*\n` +
+        `🎲 Massimo: *${MAX_BET}*\n` +
+        `👥 Massimo giocatori: *${MAX_PLAYERS}*\n` +
+        `🪙 Saldo iniziale: *${START_BALANCE}*`
+    )
+}
+
+/* =========================
+   HANDLER
+========================= */
+
 let handler = async (m, { conn, args, command }) => {
     if (!m) return
 
     const chat = m.chat
-    const jid = getUserId(m)
-    const name = userName(m)
+    const jid = playerId(m)
+    const name = playerName(m)
 
-    const sub = String(args?.[0] || '')
-        .toLowerCase()
+    if (!jid) return
 
-    // =========================
-    // SALDO
-    // =========================
+    const sub = String(args?.[0] || '').toLowerCase()
+
+    /* =========================
+       SALDO
+    ========================= */
 
     if (
         command === 'saldo' ||
         command === 'bj-saldo' ||
         (command === 'bj' && sub === 'saldo')
     ) {
-        return conn.reply(
+        return reply(
+            conn,
             chat,
             `💼 *PORTAFOGLIO*\n\n` +
             `👤 ${name}\n` +
@@ -1066,63 +1148,89 @@ let handler = async (m, { conn, args, command }) => {
         )
     }
 
-    // =========================
-    // HELP
-    // =========================
+    /* =========================
+       HELP
+    ========================= */
 
     if (
         command === 'bjhelp' ||
         (command === 'bj' && sub === 'help')
     ) {
-        return conn.reply(
+        return reply(
+            conn,
             chat,
             helpText(),
             m
         )
     }
 
-    // =========================
-    // GIOCO ESISTENTE
-    // =========================
-
     let game = games.get(chat)
 
-    // =========================
-    // CANCEL
-    // =========================
+    /* =========================
+       CANCEL
+    ========================= */
 
     if (
         command === 'bj' &&
         ['cancel', 'stop', 'end'].includes(sub)
     ) {
         if (!game) {
-            return conn.reply(
+            return reply(
+                conn,
                 chat,
                 `❌ Non c'è nessuna partita attiva.`,
                 m
             )
         }
 
+        // Solo l'host può cancellare.
+        if (game.host !== jid) {
+            return reply(
+                conn,
+                chat,
+                `⛔ Solo chi ha creato il tavolo può annullarlo.`,
+                m
+            )
+        }
+
+        // Se la partita non è ancora iniziata,
+        // restituiamo tutte le puntate.
+        if (game.phase === 'waiting') {
+            for (const player of activePlayers(game)) {
+                const refund = player.hands.reduce(
+                    (sum, hand) => sum + hand.bet,
+                    0
+                )
+
+                addBalance(
+                    player.jid,
+                    refund
+                )
+            }
+        }
+
         games.delete(chat)
 
-        return conn.reply(
+        return reply(
+            conn,
             chat,
             `🛑 *PARTITA ANNULLATA*\n\n` +
-            `La partita è stata chiusa senza modificare i saldi.`,
+            `Il tavolo è stato chiuso.`,
             m
         )
     }
 
-    // =========================
-    // PLAYERS
-    // =========================
+    /* =========================
+       PLAYERS
+    ========================= */
 
     if (
         command === 'bj' &&
         ['players', 'giocatori', 'player'].includes(sub)
     ) {
         if (!game) {
-            return conn.reply(
+            return reply(
+                conn,
                 chat,
                 `❌ Nessuna partita attiva.`,
                 m
@@ -1134,52 +1242,67 @@ let handler = async (m, { conn, args, command }) => {
 
         for (const player of activePlayers(game)) {
             text +=
-                `👤 ${player.name}` +
-                `${player.done ? ' ✅' : ''}\n`
+                `👤 *${player.name}*` +
+                `${player.done ? ' ✅' : ''}` +
+                `\n`
         }
 
-        return conn.reply(
+        text +=
+            `\n👥 Totale: *${game.players.size}/${MAX_PLAYERS}*`
+
+        if (game.phase === 'waiting') {
+            text +=
+                `\n\n⏳ Tavolo in attesa di *.bj start*.`
+        }
+
+        return reply(
+            conn,
             chat,
             text,
             m
         )
     }
 
-    // =========================
-    // JOIN
-    // =========================
+    /* =========================
+       JOIN
+    ========================= */
 
     if (
         command === 'bj' &&
         ['join', 'entra', 'partecipa'].includes(sub)
     ) {
         if (!game) {
-            return conn.reply(
+            return reply(
+                conn,
                 chat,
-                `❌ Non c'è ancora una partita.\n` +
-                `Usa *.blackjack* per crearne una.`,
+                `❌ Non c'è ancora una partita.\n\n` +
+                `Usa *.blackjack* per creare un tavolo.`,
                 m
             )
         }
 
         if (game.phase !== 'waiting') {
-            return conn.reply(
+            return reply(
+                conn,
                 chat,
-                `❌ La fase di ingresso è terminata.`,
+                `❌ La partita è già iniziata.`,
                 m
             )
         }
 
-        if (!game.joinOpen) {
-            return conn.reply(
+        if (game.players.size >= MAX_PLAYERS) {
+            return reply(
+                conn,
                 chat,
-                `❌ Non puoi più entrare in questa partita.`,
+                `❌ Il tavolo è pieno.\n` +
+                `Massimo: *${MAX_PLAYERS} giocatori*.`,
                 m
             )
         }
 
         if (game.players.has(jid)) {
-            return conn.reply(
+            return reply(
+                conn,
                 chat,
                 `⚠️ Sei già nella partita.`,
                 m
@@ -1193,7 +1316,8 @@ let handler = async (m, { conn, args, command }) => {
             bet < MIN_BET ||
             bet > MAX_BET
         ) {
-            return conn.reply(
+            return reply(
+                conn,
                 chat,
                 `❌ Puntata non valida.\n\n` +
                 `Esempio: *.bj join 100*\n` +
@@ -1204,7 +1328,8 @@ let handler = async (m, { conn, args, command }) => {
         }
 
         if (getBalance(jid) < bet) {
-            return conn.reply(
+            return reply(
+                conn,
                 chat,
                 `❌ Non hai abbastanza fiches.\n\n` +
                 `Saldo: *${money(getBalance(jid))}*\n` +
@@ -1229,26 +1354,29 @@ let handler = async (m, { conn, args, command }) => {
 
         game.turnOrder.push(jid)
 
-        return conn.reply(
+        return reply(
+            conn,
             chat,
             `✅ *${name}* è entrato al tavolo!\n\n` +
             `💰 Puntata: *${money(bet)}*\n` +
             `🪙 Saldo restante: *${money(getBalance(jid))}*\n\n` +
-            `👥 Giocatori: *${game.players.size}*`,
+            `👥 Giocatori: *${game.players.size}/${MAX_PLAYERS}*\n\n` +
+            `▶️ L'host può usare *.bj start* quando siete pronti.`,
             m
         )
     }
 
-    // =========================
-    // LEAVE
-    // =========================
+    /* =========================
+       LEAVE
+    ========================= */
 
     if (
         command === 'bj' &&
         ['leave', 'esci'].includes(sub)
     ) {
         if (!game) {
-            return conn.reply(
+            return reply(
+                conn,
                 chat,
                 `❌ Non c'è nessuna partita.`,
                 m
@@ -1256,7 +1384,8 @@ let handler = async (m, { conn, args, command }) => {
         }
 
         if (game.phase !== 'waiting') {
-            return conn.reply(
+            return reply(
+                conn,
                 chat,
                 `❌ Non puoi uscire durante una mano in corso.`,
                 m
@@ -1266,7 +1395,8 @@ let handler = async (m, { conn, args, command }) => {
         const player = game.players.get(jid)
 
         if (!player) {
-            return conn.reply(
+            return reply(
+                conn,
                 chat,
                 `❌ Non sei nella partita.`,
                 m
@@ -1278,11 +1408,20 @@ let handler = async (m, { conn, args, command }) => {
             0
         )
 
-        addBalance(jid, refund)
+        addBalance(
+            jid,
+            refund
+        )
 
-        removePlayer(game, jid)
+        game.players.delete(jid)
 
-        return conn.reply(
+        game.turnOrder =
+            game.turnOrder.filter(
+                x => x !== jid
+            )
+
+        return reply(
+            conn,
             chat,
             `🚪 *${name}* ha lasciato il tavolo.\n\n` +
             `💰 Restituite: *${money(refund)}*`,
@@ -1290,16 +1429,72 @@ let handler = async (m, { conn, args, command }) => {
         )
     }
 
-    // =========================
-    // HIT
-    // =========================
+    /* =========================
+       START
+    ========================= */
+
+    if (
+        command === 'bj' &&
+        ['start', 'inizia', 'avvia'].includes(sub)
+    ) {
+        if (!game) {
+            return reply(
+                conn,
+                chat,
+                `❌ Nessun tavolo aperto.\n\n` +
+                `Usa *.blackjack* per crearne uno.`,
+                m
+            )
+        }
+
+        if (game.host !== jid) {
+            return reply(
+                conn,
+                chat,
+                `⛔ Solo chi ha creato il tavolo può avviare la partita.`,
+                m
+            )
+        }
+
+        if (game.phase !== 'waiting') {
+            return reply(
+                conn,
+                chat,
+                `❌ La partita è già iniziata.`,
+                m
+            )
+        }
+
+        if (game.players.size < 1) {
+            return reply(
+                conn,
+                chat,
+                `❌ Serve almeno un giocatore.\n\n` +
+                `Usa *.bj join 100*.`,
+                m
+            )
+        }
+
+        await startGame(
+            conn,
+            chat,
+            game
+        )
+
+        return
+    }
+
+    /* =========================
+       HIT
+    ========================= */
 
     if (
         command === 'bj' &&
         ['hit', 'h', 'carta'].includes(sub)
     ) {
         if (!game) {
-            return conn.reply(
+            return reply(
+                conn,
                 chat,
                 `❌ Nessuna partita attiva.`,
                 m
@@ -1314,16 +1509,17 @@ let handler = async (m, { conn, args, command }) => {
         )
     }
 
-    // =========================
-    // STAND
-    // =========================
+    /* =========================
+       STAND
+    ========================= */
 
     if (
         command === 'bj' &&
         ['stand', 's', 'stop'].includes(sub)
     ) {
         if (!game) {
-            return conn.reply(
+            return reply(
+                conn,
                 chat,
                 `❌ Nessuna partita attiva.`,
                 m
@@ -1338,16 +1534,17 @@ let handler = async (m, { conn, args, command }) => {
         )
     }
 
-    // =========================
-    // DOUBLE
-    // =========================
+    /* =========================
+       DOUBLE
+    ========================= */
 
     if (
         command === 'bj' &&
         ['double', 'd', 'raddoppia'].includes(sub)
     ) {
         if (!game) {
-            return conn.reply(
+            return reply(
+                conn,
                 chat,
                 `❌ Nessuna partita attiva.`,
                 m
@@ -1362,16 +1559,17 @@ let handler = async (m, { conn, args, command }) => {
         )
     }
 
-    // =========================
-    // SPLIT
-    // =========================
+    /* =========================
+       SPLIT
+    ========================= */
 
     if (
         command === 'bj' &&
         ['split', 'splitto', 'dividi'].includes(sub)
     ) {
         if (!game) {
-            return conn.reply(
+            return reply(
+                conn,
                 chat,
                 `❌ Nessuna partita attiva.`,
                 m
@@ -1386,16 +1584,17 @@ let handler = async (m, { conn, args, command }) => {
         )
     }
 
-    // =========================
-    // INSURANCE
-    // =========================
+    /* =========================
+       INSURANCE
+    ========================= */
 
     if (
         command === 'bj' &&
         ['insurance', 'assicurazione', 'ins'].includes(sub)
     ) {
         if (!game) {
-            return conn.reply(
+            return reply(
+                conn,
                 chat,
                 `❌ Nessuna partita attiva.`,
                 m
@@ -1410,9 +1609,9 @@ let handler = async (m, { conn, args, command }) => {
         )
     }
 
-    // =========================
-    // AVVIO
-    // =========================
+    /* =========================
+       NUOVO TAVOLO
+    ========================= */
 
     if (
         command !== 'blackjack' &&
@@ -1422,25 +1621,35 @@ let handler = async (m, { conn, args, command }) => {
     }
 
     if (game) {
-        return conn.reply(
+        return reply(
+            conn,
             chat,
             `🃏 *BLACKJACK GIÀ ATTIVO!*\n\n` +
-            `👥 Giocatori: *${game.players.size}*\n\n` +
+            `👥 Giocatori: *${game.players.size}/${MAX_PLAYERS}*\n\n` +
             `Per entrare:\n` +
             `*.bj join 100*\n\n` +
-            `Per vedere i comandi:\n` +
+            `Quando siete pronti:\n` +
+            `*.bj start*\n\n` +
             `*.bj help*`,
             m
         )
     }
 
+    /*
+     * CREAZIONE TAVOLO
+     *
+     * L'utente che scrive .blackjack diventa host.
+     */
     game = {
         chat,
+
         phase: 'waiting',
         joinOpen: true,
 
-        deck: createDeck(),
+        host: jid,
+        hostName: name,
 
+        deck: createDeck(),
         dealer: [],
 
         players: new Map(),
@@ -1457,70 +1666,21 @@ let handler = async (m, { conn, args, command }) => {
 
     games.set(chat, game)
 
-    // Chi lancia il comando non entra automaticamente:
-    // deve scegliere la puntata.
     const sent = await conn.reply(
         chat,
-        `🃏 *BLACKJACK*\n` +
-        `━━━━━━━━━━━━━━━━━━\n\n` +
-
-        `🎰 *Nuovo tavolo aperto!*\n\n` +
-
-        `💰 Per partecipare:\n` +
-        `*.bj join 100*\n\n` +
-
-        `📌 Esempio:\n` +
-        `*.bj join 500*\n\n` +
-
-        `🪙 Saldo iniziale di ogni giocatore:\n` +
-        `*${money(START_BALANCE)}*\n\n` +
-
-        `⏳ Avete *15 secondi* per entrare.\n\n` +
-
-        `👥 Più giocatori possono partecipare alla stessa mano.`,
+        renderWaiting(game),
         m
     )
 
     game.lastMessage = sent
-
-    rememberMessage(
-        game,
-        sent
-    )
-
-    // Dopo 15 secondi parte la mano.
-    setTimeout(async () => {
-        const current = games.get(chat)
-
-        if (!current || current !== game) return
-
-        current.joinOpen = false
-
-        if (current.players.size === 0) {
-            games.delete(chat)
-
-            await conn.reply(
-                chat,
-                `🃏 *BLACKJACK ANNULLATO*\n\n` +
-                `Nessun giocatore è entrato al tavolo.`,
-                sent
-            )
-
-            return
-        }
-
-        await startGame(
-            conn,
-            chat,
-            current
-        )
-    }, 15000)
+    rememberMessage(game, sent)
 }
 
 handler.help = [
     'blackjack',
     'bj',
     'bj join <puntata>',
+    'bj start',
     'bj hit',
     'bj stand',
     'bj double',
