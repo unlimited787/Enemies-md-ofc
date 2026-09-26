@@ -59,7 +59,7 @@ let info = `
 │⭔ antielimina⚠️
 │⭔ antiviewonce⚠️
 │⭔ antitrava
-│⭔ antipaki⚠️
+│⭔ antipaki
 │⭔ modoadmin
 │⭔ autosticker⚠️
 └───────⭓
