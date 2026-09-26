@@ -14,10 +14,9 @@ let handler = async (m, { conn, text, args, groupMetadata, usedPrefix, command }
         who = m.chat
     }
 
-    // Se non è stato specificato alcun utente valido
-    if (!who) throw `⚠️ Tagga un utente o rispondi a un suo messaggio per ammonirlo.`
 
-    // Inizializza l'utente nel database se non esiste ancora
+    if (!who) return
+
     if (!global.db.data.users[who]) {
         global.db.data.users[who] = { warn: 0 }
     }
@@ -27,10 +26,10 @@ let handler = async (m, { conn, text, args, groupMetadata, usedPrefix, command }
 
     if (warn < war) {
         user.warn += 1
-        m.reply(`⚠️ *AVVERTIMENTO*\nUtente: @${who.split('@')[0]}\nAvvertimenti: *${user.warn}/3*`, null, { mentions: [who] })
+        m.reply(`⚠️ 𝐀𝐕𝐕𝐄𝐑𝐓𝐈𝐌𝐄𝐍𝐓𝐎 ${user.warn}/3 per @${who.split('@')[0]}`, null, { mentions: [who] })
     } else if (warn >= war) {
         user.warn = 0
-        m.reply(`⛔ *UTENTE RIMOSSO*\nL'utente @${who.split('@')[0]} ha raggiunto 3 avvertimenti ed è stato rimosso.`, null, { mentions: [who] })
+        m.reply(`⛔ 𝐔𝐓𝐄𝐍𝐓𝐄 𝐑𝐈𝐌𝐎𝐒𝐒𝐎 𝐃𝐎𝐏𝐎 𝟑 𝐀𝐕𝐕𝐄𝐑𝐓𝐈𝐌𝐄𝐍𝐓𝐈`, null, { mentions: [who] })
         
         await time(1000)
         await conn.groupParticipantsUpdate(m.chat, [who], 'remove')
