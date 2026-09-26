@@ -12,6 +12,6 @@ let handler = async (m, { conn, text }) => {
 
 handler.command = ['impostaspam']
 handler.help = ['impostaspam <link>']
-handler.tags = ['owner']
+handler.owner = true
 
 export default handler
