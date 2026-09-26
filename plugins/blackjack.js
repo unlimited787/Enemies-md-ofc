@@ -927,4 +927,619 @@ async function handleSplit(conn, chat, game, jid) {
     }
 
     setBalance(
- 
+        jid,
+        getBalance(jid) - hand.bet
+    )
+
+    const card1 = hand.cards[0]
+    const card2 = hand.cards[1]
+
+    const firstHand = {
+        cards: [card1, drawCard(game)],
+        bet: hand.bet,
+        insurance: 0,
+        doubled: false,
+        finished: false,
+        result: null,
+        payout: 0
+    }
+
+    const secondHand = {
+        cards: [card2, drawCard(game)],
+        bet: hand.bet,
+        insurance: 0,
+        doubled: false,
+        finished: false,
+        result: null,
+        payout: 0
+    }
+
+    player.hands.splice(
+        player.activeHand,
+        1,
+        firstHand,
+        secondHand
+    )
+
+    await sendAndRemember(
+        conn,
+        chat,
+        game,
+        `✂️ *${player.name}* ha diviso la mano!\n\n` +
+        `🃏 *Mano 1:* ${formatHand(firstHand)}\n` +
+        `💠 ${handValue(firstHand)}\n\n` +
+        `🃏 *Mano 2:* ${formatHand(secondHand)}\n` +
+        `💠 ${handValue(secondHand)}\n\n` +
+        `➡️ Continua con la *Mano 1*.`
+    )
+}
+
+async function handleInsurance(conn, chat, game, jid) {
+    if (!playerCanAct(game, jid)) {
+        return conn.reply(
+            chat,
+            `⛔ Non è il tuo turno.`,
+            game.lastMessage
+        )
+    }
+
+    if (!game.canInsurance) {
+        return conn.reply(
+            chat,
+            `❌ L'assicurazione non è disponibile.`,
+            game.lastMessage
+        )
+    }
+
+    const player = game.players.get(jid)
+    const hand = activeHand(player)
+
+    if (hand.cards.length !== 2) {
+        return conn.reply(
+            chat,
+            `❌ Puoi comprare l'assicurazione solo all'inizio della mano.`,
+            game.lastMessage
+        )
+    }
+
+    if (hand.insurance > 0) {
+        return conn.reply(
+            chat,
+            `❌ Hai già acquistato l'assicurazione.`,
+            game.lastMessage
+        )
+    }
+
+    const amount = Math.floor(hand.bet / 2)
+
+    if (getBalance(jid) < amount) {
+        return conn.reply(
+            chat,
+            `❌ Non hai abbastanza fiches per l'assicurazione.\n` +
+            `Servono: *${money(amount)}*`,
+            game.lastMessage
+        )
+    }
+
+    setBalance(
+        jid,
+        getBalance(jid) - amount
+    )
+
+    hand.insurance = amount
+
+    await sendAndRemember(
+        conn,
+        chat,
+        game,
+        `🛡️ *${player.name}* ha acquistato l'assicurazione.\n\n` +
+        `💰 Costo: *${money(amount)}*\n` +
+        `🛡️ Copertura: *${money(amount * 3)}*`
+    )
+}
+
+let handler = async (m, { conn, args, command }) => {
+    if (!m) return
+
+    const chat = m.chat
+    const jid = getUserId(m)
+    const name = userName(m)
+
+    const sub = String(args?.[0] || '')
+        .toLowerCase()
+
+    // =========================
+    // SALDO
+    // =========================
+
+    if (
+        command === 'saldo' ||
+        command === 'bj-saldo' ||
+        (command === 'bj' && sub === 'saldo')
+    ) {
+        return conn.reply(
+            chat,
+            `💼 *PORTAFOGLIO*\n\n` +
+            `👤 ${name}\n` +
+            `🪙 Saldo: *${money(getBalance(jid))}*`,
+            m
+        )
+    }
+
+    // =========================
+    // HELP
+    // =========================
+
+    if (
+        command === 'bjhelp' ||
+        (command === 'bj' && sub === 'help')
+    ) {
+        return conn.reply(
+            chat,
+            helpText(),
+            m
+        )
+    }
+
+    // =========================
+    // GIOCO ESISTENTE
+    // =========================
+
+    let game = games.get(chat)
+
+    // =========================
+    // CANCEL
+    // =========================
+
+    if (
+        command === 'bj' &&
+        ['cancel', 'stop', 'end'].includes(sub)
+    ) {
+        if (!game) {
+            return conn.reply(
+                chat,
+                `❌ Non c'è nessuna partita attiva.`,
+                m
+            )
+        }
+
+        games.delete(chat)
+
+        return conn.reply(
+            chat,
+            `🛑 *PARTITA ANNULLATA*\n\n` +
+            `La partita è stata chiusa senza modificare i saldi.`,
+            m
+        )
+    }
+
+    // =========================
+    // PLAYERS
+    // =========================
+
+    if (
+        command === 'bj' &&
+        ['players', 'giocatori', 'player'].includes(sub)
+    ) {
+        if (!game) {
+            return conn.reply(
+                chat,
+                `❌ Nessuna partita attiva.`,
+                m
+            )
+        }
+
+        let text =
+            `👥 *GIOCATORI*\n\n`
+
+        for (const player of activePlayers(game)) {
+            text +=
+                `👤 ${player.name}` +
+                `${player.done ? ' ✅' : ''}\n`
+        }
+
+        return conn.reply(
+            chat,
+            text,
+            m
+        )
+    }
+
+    // =========================
+    // JOIN
+    // =========================
+
+    if (
+        command === 'bj' &&
+        ['join', 'entra', 'partecipa'].includes(sub)
+    ) {
+        if (!game) {
+            return conn.reply(
+                chat,
+                `❌ Non c'è ancora una partita.\n` +
+                `Usa *.blackjack* per crearne una.`,
+                m
+            )
+        }
+
+        if (game.phase !== 'waiting') {
+            return conn.reply(
+                chat,
+                `❌ La fase di ingresso è terminata.`,
+                m
+            )
+        }
+
+        if (!game.joinOpen) {
+            return conn.reply(
+                chat,
+                `❌ Non puoi più entrare in questa partita.`,
+                m
+            )
+        }
+
+        if (game.players.has(jid)) {
+            return conn.reply(
+                chat,
+                `⚠️ Sei già nella partita.`,
+                m
+            )
+        }
+
+        const bet = parseAmount(args?.[1])
+
+        if (
+            bet === null ||
+            bet < MIN_BET ||
+            bet > MAX_BET
+        ) {
+            return conn.reply(
+                chat,
+                `❌ Puntata non valida.\n\n` +
+                `Esempio: *.bj join 100*\n` +
+                `Minimo: *${MIN_BET}*\n` +
+                `Massimo: *${MAX_BET}*`,
+                m
+            )
+        }
+
+        if (getBalance(jid) < bet) {
+            return conn.reply(
+                chat,
+                `❌ Non hai abbastanza fiches.\n\n` +
+                `Saldo: *${money(getBalance(jid))}*\n` +
+                `Puntata: *${money(bet)}*`,
+                m
+            )
+        }
+
+        setBalance(
+            jid,
+            getBalance(jid) - bet
+        )
+
+        game.players.set(
+            jid,
+            createPlayer(
+                jid,
+                name,
+                bet
+            )
+        )
+
+        game.turnOrder.push(jid)
+
+        return conn.reply(
+            chat,
+            `✅ *${name}* è entrato al tavolo!\n\n` +
+            `💰 Puntata: *${money(bet)}*\n` +
+            `🪙 Saldo restante: *${money(getBalance(jid))}*\n\n` +
+            `👥 Giocatori: *${game.players.size}*`,
+            m
+        )
+    }
+
+    // =========================
+    // LEAVE
+    // =========================
+
+    if (
+        command === 'bj' &&
+        ['leave', 'esci'].includes(sub)
+    ) {
+        if (!game) {
+            return conn.reply(
+                chat,
+                `❌ Non c'è nessuna partita.`,
+                m
+            )
+        }
+
+        if (game.phase !== 'waiting') {
+            return conn.reply(
+                chat,
+                `❌ Non puoi uscire durante una mano in corso.`,
+                m
+            )
+        }
+
+        const player = game.players.get(jid)
+
+        if (!player) {
+            return conn.reply(
+                chat,
+                `❌ Non sei nella partita.`,
+                m
+            )
+        }
+
+        const refund = player.hands.reduce(
+            (sum, hand) => sum + hand.bet,
+            0
+        )
+
+        addBalance(jid, refund)
+
+        removePlayer(game, jid)
+
+        return conn.reply(
+            chat,
+            `🚪 *${name}* ha lasciato il tavolo.\n\n` +
+            `💰 Restituite: *${money(refund)}*`,
+            m
+        )
+    }
+
+    // =========================
+    // HIT
+    // =========================
+
+    if (
+        command === 'bj' &&
+        ['hit', 'h', 'carta'].includes(sub)
+    ) {
+        if (!game) {
+            return conn.reply(
+                chat,
+                `❌ Nessuna partita attiva.`,
+                m
+            )
+        }
+
+        return handleHit(
+            conn,
+            chat,
+            game,
+            jid
+        )
+    }
+
+    // =========================
+    // STAND
+    // =========================
+
+    if (
+        command === 'bj' &&
+        ['stand', 's', 'stop'].includes(sub)
+    ) {
+        if (!game) {
+            return conn.reply(
+                chat,
+                `❌ Nessuna partita attiva.`,
+                m
+            )
+        }
+
+        return handleStand(
+            conn,
+            chat,
+            game,
+            jid
+        )
+    }
+
+    // =========================
+    // DOUBLE
+    // =========================
+
+    if (
+        command === 'bj' &&
+        ['double', 'd', 'raddoppia'].includes(sub)
+    ) {
+        if (!game) {
+            return conn.reply(
+                chat,
+                `❌ Nessuna partita attiva.`,
+                m
+            )
+        }
+
+        return handleDouble(
+            conn,
+            chat,
+            game,
+            jid
+        )
+    }
+
+    // =========================
+    // SPLIT
+    // =========================
+
+    if (
+        command === 'bj' &&
+        ['split', 'splitto', 'dividi'].includes(sub)
+    ) {
+        if (!game) {
+            return conn.reply(
+                chat,
+                `❌ Nessuna partita attiva.`,
+                m
+            )
+        }
+
+        return handleSplit(
+            conn,
+            chat,
+            game,
+            jid
+        )
+    }
+
+    // =========================
+    // INSURANCE
+    // =========================
+
+    if (
+        command === 'bj' &&
+        ['insurance', 'assicurazione', 'ins'].includes(sub)
+    ) {
+        if (!game) {
+            return conn.reply(
+                chat,
+                `❌ Nessuna partita attiva.`,
+                m
+            )
+        }
+
+        return handleInsurance(
+            conn,
+            chat,
+            game,
+            jid
+        )
+    }
+
+    // =========================
+    // AVVIO
+    // =========================
+
+    if (
+        command !== 'blackjack' &&
+        command !== 'bj'
+    ) {
+        return
+    }
+
+    if (game) {
+        return conn.reply(
+            chat,
+            `🃏 *BLACKJACK GIÀ ATTIVO!*\n\n` +
+            `👥 Giocatori: *${game.players.size}*\n\n` +
+            `Per entrare:\n` +
+            `*.bj join 100*\n\n` +
+            `Per vedere i comandi:\n` +
+            `*.bj help*`,
+            m
+        )
+    }
+
+    game = {
+        chat,
+        phase: 'waiting',
+        joinOpen: true,
+
+        deck: createDeck(),
+
+        dealer: [],
+
+        players: new Map(),
+        turnOrder: [],
+        currentTurn: 0,
+
+        canInsurance: false,
+
+        lastMessage: null,
+        messageIds: new Set(),
+
+        createdAt: Date.now()
+    }
+
+    games.set(chat, game)
+
+    // Chi lancia il comando non entra automaticamente:
+    // deve scegliere la puntata.
+    const sent = await conn.reply(
+        chat,
+        `🃏 *BLACKJACK*\n` +
+        `━━━━━━━━━━━━━━━━━━\n\n` +
+
+        `🎰 *Nuovo tavolo aperto!*\n\n` +
+
+        `💰 Per partecipare:\n` +
+        `*.bj join 100*\n\n` +
+
+        `📌 Esempio:\n` +
+        `*.bj join 500*\n\n` +
+
+        `🪙 Saldo iniziale di ogni giocatore:\n` +
+        `*${money(START_BALANCE)}*\n\n` +
+
+        `⏳ Avete *15 secondi* per entrare.\n\n` +
+
+        `👥 Più giocatori possono partecipare alla stessa mano.`,
+        m
+    )
+
+    game.lastMessage = sent
+
+    rememberMessage(
+        game,
+        sent
+    )
+
+    // Dopo 15 secondi parte la mano.
+    setTimeout(async () => {
+        const current = games.get(chat)
+
+        if (!current || current !== game) return
+
+        current.joinOpen = false
+
+        if (current.players.size === 0) {
+            games.delete(chat)
+
+            await conn.reply(
+                chat,
+                `🃏 *BLACKJACK ANNULLATO*\n\n` +
+                `Nessun giocatore è entrato al tavolo.`,
+                sent
+            )
+
+            return
+        }
+
+        await startGame(
+            conn,
+            chat,
+            current
+        )
+    }, 15000)
+}
+
+handler.help = [
+    'blackjack',
+    'bj',
+    'bj join <puntata>',
+    'bj hit',
+    'bj stand',
+    'bj double',
+    'bj split',
+    'bj insurance',
+    'bj saldo',
+    'bj players',
+    'bj leave',
+    'bj cancel'
+]
+
+handler.tags = ['game']
+
+handler.command = [
+    'blackjack',
+    'bj',
+    'saldo',
+    'bj-saldo',
+    'bjhelp'
+]
+
+export default handler
