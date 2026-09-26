@@ -13,7 +13,7 @@ let handler = async (m, { conn, args, groupMetadata, text }) => {
     }
 
     // Se non è stato specificato alcun utente valido
-    if (!who) throw `⚠️ Tagga un utente o rispondi a un suo messaggio per rimuovere un avvertimento.`
+    if (!who) return
 
     // Inizializza l'utente nel database se non esiste ancora
     if (!global.db.data.users[who]) {
@@ -25,9 +25,9 @@ let handler = async (m, { conn, args, groupMetadata, text }) => {
 
     if (warn > 0) {
         user.warn -= 1
-        m.reply(`🟢 *AVVERTIMENTO RIMOSSO*\nUtente: @${who.split('@')[0]}\nAvvertimenti rimanenti: *${user.warn}/3*`, null, { mentions: [who] })
+        m.reply(`👌`, null, { mentions: [who] })
     } else {
-        m.reply(`ℹ️ L'utente @${who.split('@')[0]} non ha alcun avvertimento da rimuovere.`, null, { mentions: [who] })
+        m.reply(`👌`, null, { mentions: [who] })
     }
 }
 
