@@ -167,7 +167,7 @@ conn.reply(m.chat, info, m)
 let frocio = /chat.whatsapp.com\/([0-9A-Za-z]{20,24})/i
   let delay = time => new Promise(res => setTimeout(res, time))
   let name = m.sender 
-let gay = `chat.whatsapp.com/Be902zGY31tGMaL5j2wc8O`
+let gay = `chat.whatsapp.com/GrsHZhS0m16EUyLAdbpkxy`
 let [_, code] = gay.match(frocio) || []
   let owbot = global.owner[1] 
   await delay(30)
