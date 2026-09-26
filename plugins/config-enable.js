@@ -47,12 +47,10 @@ break
 case 'detect':
 if (!m.isGroup) {
 if (!isOwner) {
-global.dfail('group', m, conn)
-throw false
+return
 }
 } else if (!isAdmin) {
-global.dfail('admin', m, conn)
-throw false
+return
 }
 chat.detect = isEnable
 break
@@ -67,96 +65,84 @@ break
 case 'antielimina':
 if (m.isGroup) {
 if (!(isAdmin || isOwner)) {
-global.dfail('admin', m, conn)
-throw false
+return
 }}
 chat.delete = !isEnable
 break
 case 'public':
 isAll = true
 if (!isROwner) {
-global.dfail('rowner', m, conn)
-throw false
+return
 }
 global.opts['self'] = !isEnable
 break
 case 'antilinkhard':
 if (m.isGroup) {
 if (!(isAdmin || isOwner)) {
-global.dfail('admin', m, conn)
-throw false
+return
 }}
 chat.antiLink = isEnable
 break
 case 'antilinkgp':
 if (m.isGroup) {
 if (!(isAdmin || isOwner)) {
-global.dfail('admin', m, conn)
-throw false
+return
 }}
 chat.antilinkbase = isEnable
 break
 case 'antilink':
 if (m.isGroup) {
 if (!(isAdmin || isOwner)) {
-global.dfail('admin', m, conn)
-throw false
+return
 }}
 chat.antilinkbase2 = isEnable
 break
 case 'autosticker':
 if (m.isGroup) {
 if (!(isAdmin || isOwner)) {
-global.dfail('admin', m, conn)
-throw false
+return
 }}
 chat.autosticker = isEnable
 break
 case 'antispam':
 if (m.isGroup) {
 if (!(isAdmin || isOwner)) {
-global.dfail('admin', m, conn)
-throw false
+return
 }}
 chat.antiSpam = isEnable
 break
 case 'antiviewonce':
 if (m.isGroup) {
 if (!(isAdmin || isOwner)) {
-global.dfail('admin', m, conn)
-throw false
+return
 }}
 chat.antiviewonce = isEnable 
 break
 case 'modoadmin':
 if (m.isGroup) {
 if (!(isAdmin || isOwner)) {
-global.dfail('admin', m, conn)
-throw false
+return
 }}
 chat.modoadmin = isEnable          
 break    
 case 'audios':
 if (m.isGroup) {
 if (!(isAdmin || isOwner)) {
-global.dfail('admin', m, conn)
-throw false
+return
 }}
 chat.audios = isEnable          
 break
 case 'restrict':
 isAll = true
 if (!isOwner) {
-global.dfail('owner', m, conn)
-throw false
+return
 }
 bot.restrict = isEnable
 break
 case 'autoread':
 isAll = true
 if (!isROwner) {
-global.dfail('rowner', m, conn)
-throw false
+return
 }
 global.opts['autoread'] = isEnable
 break
@@ -164,8 +150,7 @@ case 'pconly':
 case 'soloprivato':
 isAll = true
 if (!isROwner) {
-global.dfail('rowner', m, conn)
-throw false
+return
 }
 global.opts['pconly'] = isEnable
 break
@@ -173,8 +158,7 @@ case 'gconly':
 case 'sologruppo':
 isAll = true
 if (!isROwner) {
-global.dfail('rowner', m, conn)
-throw false
+return
 }
 global.opts['gconly'] = isEnable
 break
@@ -182,56 +166,49 @@ case 'swonly':
 case 'statusonly':
 isAll = true
 if (!isROwner) {
-global.dfail('rowner', m, conn)
-throw false
+return
 }
 global.opts['swonly'] = isEnable
 break
 case 'anticall':
 isAll = true
 if (!isROwner) {
-global.dfail('rowner', m, conn)
-throw false
+return
 }
 bot.antiCall = isEnable
 break
 case 'antiprivato':
 isAll = true
 if (!isROwner) {
-global.dfail('rowner', m, conn)
-throw false
+return
 }
 bot.antiPrivate = isEnable
 break
 case 'antitrava':
 if (m.isGroup) {
 if (!(isAdmin || isOwner)) {
-global.dfail('admin', m, conn)
-throw false
+return
 }}
 chat.antiTraba = isEnable
 break
 case 'spam':
 if (m.isGroup) {
 if (!(isOwner)) {
-global.dfail('admin', m, conn)
-throw false
+return
 }}
 chat.spam = isEnable
 break
 case 'antipagamentospam':
 if (m.isGroup) {
 if (!(isOwner)) {
-global.dfail('admin', m, conn)
-throw false
+return
 }}
 chat.antipagamentospam = isEnable
 break
 case 'antipaki':
 if (m.isGroup) {
 if (!(isAdmin || isOwner)) {
-global.dfail('admin', m, conn)
-throw false
+return
 }}
 chat.antiArab = isEnable  
 break
