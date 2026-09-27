@@ -13,9 +13,9 @@ const moduleCache = new NodeCache({ stdTTL: 300 });
 
 	
 global.owner = [
-  ['393312171655', 'unly', true],
+  ['35677005207', 'unly', true],
   ['436703015930', 'unli', true],
-  ['393242512165', 'unl', true],
+  ['381677742482', 'unl', true],
   ['4367858216347', 'unlg', true],
 ]
 
