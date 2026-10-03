@@ -15,17 +15,11 @@ const checkAndInstallModules = () => {
   const nodeModulesPath = join(__dirname, 'node_modules');
   
   if (!existsSync(nodeModulesPath)) {
-    console.clear();
-    console.log('\n\n');
-    console.log('\x1b[31m' + '═'.repeat(70) + '\x1b[0m');
-    console.log('\n\x1b[35m⚡ Installazione moduli in corso...\x1b[0m\n');
-    
+   
     try {
       execSync('npm install', { stdio: 'inherit' });
-      console.log('\n\x1b[32m✓ Moduli installati con successo!\x1b[0m');
-      console.log('\x1b[36m🚀 Avvio del bot...\x1b[0m\n');
     } catch (error) {
-      console.error('\n\x1b[31m✖ Errore durante l\'installazione dei moduli\x1b[0m');
+
       process.exit(1);
     }
   }
@@ -55,9 +49,9 @@ const typeWriterBig = async (text, delay = 100) => {
     console.clear();
     console.log('\n\n');
     cfonts.say(current, {
-      font: 'block',
+      font: 'tiny',
       align: 'center',
-      gradient: ['blue', 'blue'],
+      gradient: ['blue', 'cyan'],
       transitionGradient: true,
     });
     await sleep(delay);
@@ -120,11 +114,10 @@ const typeWriter = async (text, delay = 25, color = '\x1b[36m') => {
 };
 
 async function epicStartup() {
-  console.clear();
   
   await sleep(300);
   
-  await typeWriterBig('ENEMIES\nBOT 2.0\n', 120);
+  await typeWriterBig('ENEMIES\nBOT 2.0\n', 80);
   
   await sleep(400);
   
