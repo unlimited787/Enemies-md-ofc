@@ -55,7 +55,7 @@ import {
 import readline from 'readline';
 import NodeCache from 'node-cache';
 
-// Funzione vuota per prevenire ReferenceError: joinConfiguredChannel is not defined
+
 async function joinConfiguredChannel() {
     return;
 }
@@ -195,7 +195,7 @@ global.timestamp = {
 };
 const __dirname = global.__dirname(import.meta.url);
 
-// Parsing nativo degli argomenti CLI in sostituzione di yargs
+
 const argsList = process.argv.slice(2);
 const parseCliArgs = (args) => {
     const result = {};
@@ -412,7 +412,7 @@ async function askValidatedPhoneNumber() {
             input,
             normalized
         };
-        logSystem('Numero non valido. Inserisci il prefisso internazionale completo.', 'yellowBright');
+        logSystem('riprova', 'yellowBright');
     }
 }
 
@@ -434,10 +434,9 @@ async function requestPairingCodeFlow() {
         const raw = await global.conn.requestPairingCode(normalizedNumber, generateRandomCode());
         const formatted = formatPairingCode(raw);
         console.log(
-            chalk.bold.white(chalk.bgBlueBright('꒰🩸꒱ ◦•≫ CODICE DI COLLEGAMENTO:')),
+            chalk.bold.white(chalk.bgBlueBright('꒰🩸꒱ ◦•≫ CODICE:')),
             chalk.bold.white(formatted)
         );
-        logSystem('Inserisci il codice su WhatsApp › Dispositivi collegati › Collega un dispositivo.', 'greenBright');
     } catch (err) {
         pairingCodeRequested = false;
         logSystem(`Impossibile generare il pairing code: ${err.message}`, 'redBright');
@@ -584,7 +583,7 @@ async function connectionUpdate(update) {
     if (global.db.data == null) global.loadDatabase();
 
     if (connection === 'connecting')
-        logConnectionState('Connessione a WhatsApp in corso...', 'whiteBright');
+        logConnectionState('...', 'whiteBright');
 
     if (qr && pairingMode === 'qr') {
         console.log(chalk.bold.hex('#8b5cf6')(``));
@@ -620,22 +619,21 @@ async function connectionUpdate(update) {
         const printed = global.connectionMessagesPrinted;
 
         if (reason === DisconnectReason.badSession && !printed.badSession) {
-            console.log(chalk.bold.redBright(`\n[ ⚠️ ] Sessione errata — elimina ${global.authFile} e riconnetti.`));
+            console.log(chalk.bold.redBright(`\nriconnessione in corso...`));
             printed.badSession = true;
-            process.exit(1);
         } else if (reason === DisconnectReason.loggedOut && !printed.loggedOut) {
-            console.log(chalk.bold.redBright(`\n[ ⚠️ ] Disconnesso — elimina ${global.authFile} e riconnetti.`));
+            console.log(chalk.bold.redBright(`\nrichiedi un nuovo qr e ricollega il bot`));
             printed.loggedOut = true;
             process.exit(1);
         } else if (reason === DisconnectReason.connectionReplaced && !printed.connectionReplaced) {
-            console.log(chalk.bold.yellowBright(`[ ⚠️ ] Connessione sostituita da un'altra sessione. Disconnetti prima la sessione attiva.`));
+            console.log(chalk.bold.yellowBright(`controlla le sessioni`));
             printed.connectionReplaced = true;
             process.exit(1);
         } else if (reason === DisconnectReason.connectionLost && !printed.connectionLost) {
-            console.log(chalk.bold.blueBright(`\n[ ⚠️ ] Connessione persa — riconnessione in corso...`));
+            console.log(chalk.bold.blueBright(`\nriconnessione in corso...`));
             printed.connectionLost = true;
         } else if (reason === DisconnectReason.timedOut && !printed.timedOut) {
-            console.log(chalk.bold.yellowBright(`\n[ ⚠️ ] Connessione scaduta — riconnessione in corso...`));
+            console.log(chalk.bold.yellowBright(`\nriconnessione in corso...`));
             printed.timedOut = true;
         }
     }
@@ -647,26 +645,25 @@ process.on('unhandledRejection', console.error);
 global.conn.ev.on('connection.update', connectionUpdate);
 global.conn.ev.on('creds.update', saveCreds);
 
-// ─── Handler reload ────────────────────────────────────────────────────────────
 let isInit = true;
 let handler = await import('./handler.js').catch(e => {
-    console.error('❌ ERRORE IMPORT HANDLER:', e);
+    console.error('err', e);
     process.exit(1);
 });
 
 global.reloadHandler = async function(restatConn = false) {
     try {
         const Handler = await import(`./handler.js?update=${Date.now()}`).catch(e => {
-            console.error('❌ ERRORE IMPORT HANDLER.JS:', e);
+            console.error('err', e);
             return null;
         });
         if (!Handler?.handler) {
-            console.error('❌ handler.js non ha esportato handler. Keys:', Object.keys(Handler ?? {}));
+            console.error('err', Object.keys(Handler ?? {}));
             return false;
         }
         handler = Handler;
     } catch (e) {
-        console.error('❌ ERRORE reloadHandler:', e);
+        console.error('err', e);
         return false;
     }
 
@@ -763,15 +760,15 @@ global.reload = async (_ev, filename) => {
 
     if (key in global.plugins) {
         if (fileExists) {
-            global.conn?.logger?.info(chalk.green(`✅ PLUGIN AGGIORNATO — '${key}'`));
+            global.conn?.logger?.info(chalk.green(`'${key}'`));
         } else {
-            global.conn?.logger?.warn(chalk.yellow(`⚠️ PLUGIN RIMOSSO: '${key}'`));
+            global.conn?.logger?.warn(chalk.yellow(`'${key}'`));
             delete global.plugins[key];
             global.plugins = Object.fromEntries(Object.entries(global.plugins).sort(([a], [b]) => a.localeCompare(b)));
             return;
         }
     } else if (fileExists) {
-        global.conn?.logger?.info(chalk.blue(`🆕 NUOVO PLUGIN: '${key}'`));
+        global.conn?.logger?.info(chalk.blue(`'${key}'`));
     }
 
     if (!fileExists) return;
@@ -782,7 +779,7 @@ global.reload = async (_ev, filename) => {
         allowAwaitOutsideFunction: true
     });
     if (err) {
-        global.conn?.logger?.error(chalk.red(`❌ ERRORE SINTASSI '${key}'\n${format(err)}`));
+        global.conn?.logger?.error(chalk.red(`err '${key}'\n${format(err)}`));
         return;
     }
     try {
@@ -803,7 +800,6 @@ pluginWatcher.setMaxListeners(20);
 
 await global.reloadHandler();
 
-// ─── SubBot: migrazione sessioni legacy + ricollegamento automatico ────────────
 
 
 function clearDirectory(dirPath) {
