@@ -1,4 +1,4 @@
-import dns from 'dns';
+﻿import dns from 'dns';
 dns.setDefaultResultOrder('ipv4first');
 
 import {
@@ -617,7 +617,7 @@ antiporno: false,
 antioneview: false,
 
 autolevelup: false,
-antivoip: false,
+antibot: false,
 rileva: false,
 modoadmin: false,
 
