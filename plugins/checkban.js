@@ -1,110 +1,158 @@
-import fetch from 'node-fetch'
+let handler = async (m, { conn, text }) => {
+    if (!text) {
+        return m.reply(
+            `❌ Inserisci un numero.\n\n` +
+            `Esempio:\n` +
+            `.bancheck 393331234567`
+        )
+    }
 
-const URL = 'https://7107.api.greenapi.com/waInstance710722755372/unbanStatus/a181d957d05842f19bcc3690a7645f029ff1e3ecbd4843ff8e'
+    // Pulisce il numero
+    let number = text.replace(/[^0-9]/g, '')
 
-function normalizeNumber(number = '') {
-  return String(number)
-    .replace(/@s\.whatsapp\.net/g, '')
-    .replace(/@c\.us/g, '')
-    .replace(/\D/g, '')
-    .replace(/^00/, '')
-}
+    if (number.length < 7) {
+        return m.reply('❌ Numero non valido.')
+    }
 
-function getStatus(status) {
-  switch (status) {
-    case 'UNBANNED':
-      return '?? Account sbloccato'
-    case 'IN_REVIEW':
-      return '?? Richiesta in revisione'
-    case 'PERMANETLY_BANNED':
-      return '?? Account permanentemente bannato'
-    case 'NO_APPEAL_OPEN':
-      return '? Nessuna richiesta di sblocco'
-    default:
-      return `? ${status || 'Sconosciuto'}`
-  }
-}
+    let jid = number + '@s.whatsapp.net'
 
-let handler = async function (m, { text, usedPrefix, command }) {
-
-  let number = text?.trim() || ''
-
-  if (!number && m.quoted?.sender) {
-    number = m.quoted.sender.split('@')[0]
-  }
-
-  number = normalizeNumber(number)
-
-  if (!number) {
-    return m.reply(
-      `? Usa ${usedPrefix}${command} 393xxxxxxxxx\n` +
-      `oppure rispondi a un messaggio con ${usedPrefix}${command}`
+    await m.reply(
+        `🔎 *WHATSAPP BAN CHECK*\n\n` +
+        `📱 Numero: +${number}\n` +
+        `⏳ Controllo in corso...`
     )
-  }
 
-  await m.reply('?? Controllo account...')
+    let registry = null
+    let sendPage = null
+    let errors = []
 
-  try {
-
-    const response = await fetch(URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        phoneNumber: Number(number)
-      })
-    })
-
-    const raw = await response.text()
-
-    let data
+    // =========================================================
+    // A — CONTROLLO REGISTRAZIONE WHATSAPP
+    // =========================================================
 
     try {
-      data = JSON.parse(raw)
-    } catch {
-      data = null
+        if (typeof conn.onWhatsApp === 'function') {
+            let result = await conn.onWhatsApp(jid)
+
+            if (Array.isArray(result) && result.length > 0) {
+                registry = result[0]
+            } else {
+                registry = {
+                    exists: false
+                }
+            }
+        } else {
+            errors.push('onWhatsApp non disponibile')
+        }
+    } catch (e) {
+        errors.push(`onWhatsApp: ${e.message}`)
     }
 
-    if (!response.ok) {
-      return m.reply(
-        `? *CHECKBAN*\n\n` +
-        `HTTP: ${response.status}\n` +
-        `${data?.message || data?.error || raw || 'Errore sconosciuto'}`
-      )
+    // =========================================================
+    // B — CONTROLLO PAGINA PUBBLICA WHATSAPP
+    // =========================================================
+
+    try {
+        let url =
+            `https://api.whatsapp.com/send?phone=${number}`
+
+        let response = await fetch(url, {
+            redirect: 'follow',
+            headers: {
+                'User-Agent':
+                    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
+                    'AppleWebKit/537.36 Chrome/131.0 Safari/537.36'
+            }
+        })
+
+        let html = await response.text()
+
+        sendPage = {
+            status: response.status,
+            ok: response.ok,
+            length: html.length,
+
+            generic:
+                /WhatsApp Messenger/i.test(html) &&
+                !/Download WhatsApp/i.test(html),
+
+            hasWhatsApp:
+                /WhatsApp/i.test(html)
+        }
+
+    } catch (e) {
+        errors.push(`send-page: ${e.message}`)
     }
 
-    if (!data?.status) {
-      return m.reply(
-        `? *CHECKBAN*\n\n` +
-        `Risposta API non valida:\n${raw}`
-      )
+    // =========================================================
+    // ANALISI
+    // =========================================================
+
+    let exists =
+        registry?.exists === true
+
+    let confidence = 0
+    let status = 'UNKNOWN'
+    let emoji = '❓'
+
+    /*
+     * IMPORTANTE:
+     * questa prima versione NON dichiara automaticamente
+     * "BANNED" sulla base di un singolo fallimento.
+     */
+
+    if (exists) {
+        status = 'ACTIVE'
+        emoji = '🟢'
+        confidence = 0.90
+    } else if (registry && registry.exists === false) {
+        status = 'OFF_WHATSAPP'
+        emoji = '⚪'
+        confidence = 0.80
     }
 
-    let message =
-      `?? *CHECKBAN*\n\n` +
-      `?? Numero: +${number}\n` +
-      `?? Stato: ${getStatus(data.status)}`
+    // =========================================================
+    // RISULTATO
+    // =========================================================
 
-    if (data.reason) {
-      message += `\n?? Motivo: ${data.reason}`
+    let out =
+        `🔎 *WHATSAPP BAN CHECK*\n\n` +
+        `📱 *Numero:* +${number}\n\n` +
+
+        `${emoji} *Stato:* ${status}\n` +
+        `📊 *Confidence:* ${Math.round(confidence * 100)}%\n\n` +
+
+        `━━━━━━━━━━━━━━\n` +
+        `📡 *Registry WhatsApp:* ` +
+        `${registry?.exists === true ? '✅' : registry?.exists === false ? '❌' : '⚠️'}\n` +
+
+        `🌐 *Send page:* ` +
+        `${sendPage ? '✅' : '⚠️'}\n` +
+
+        `━━━━━━━━━━━━━━`
+
+    if (registry?.jid) {
+        out += `\n🆔 *JID:* ${registry.jid}`
     }
 
-    return m.reply(message)
+    if (registry?.lid) {
+        out += `\n🔗 *LID:* ${registry.lid}`
+    }
 
-  } catch (error) {
+    if (errors.length) {
+        out +=
+            `\n\n⚠️ *Note tecniche:*\n` +
+            errors.map(x => `• ${x}`).join('\n')
+    }
 
-    console.error('[CHECKBAN]', error)
+    out +=
+        `\n\n_Questo controllo non invia messaggi al numero._`
 
-    return m.reply(
-      `? *CHECKBAN*\n\n` +
-      `${error.message || 'Errore di connessione'}`
-    )
-  }
+    await m.reply(out)
 }
 
-handler.help = ['checkban <numero>']
-handler.tags = ['owner']
-handler.command = /^checkban$/i
+handler.help = ['bancheck <numero>']
+handler.tags = ['tools']
+handler.command = ['bancheck', 'checkban']
 
 export default handler
