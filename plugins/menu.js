@@ -53,7 +53,7 @@ let info = `
 │⭔ antilinkhard
 │⭔ antilinkgp
 │⭔ antispam
-│⭔ detect⚠️
+│⭔ detect
 │⭔ antielimina⚠️
 │⭔ antiviewonce⚠️
 │⭔ antitrava
