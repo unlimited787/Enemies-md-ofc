@@ -3,155 +3,72 @@
  * ANTIBOT / BLACKLIST ONLY
  * ============================================================
  *
- * Questo plugin NON usa una whitelist per decidere cosa bloccare.
+ * Il plugin si attiva SOLO se:
  *
- * REGOLA:
+ *   global.db.data.chats[m.chat].antibot === true
  *
- *   BLOCKED_TYPES  -> BLOCCA
+ * Regola:
+ *
+ *   BLOCKED_TYPES -> BLOCCA
  *   qualsiasi altro tipo -> PASSA
  *
- * Questo evita espulsioni accidentali per:
- *
- *   - null
- *   - undefined
- *   - tipi sconosciuti
- *   - eventi tecnici
- *   - nuovi tipi introdotti da WhatsApp/Baileys
- *
  * ============================================================
  */
 
-
-/*
- * ============================================================
- * TIPI ESPLICITAMENTE BLOCCATI
- * ============================================================
- */
 
 const BLOCKED_TYPES = new Set([
 
-    // --------------------------------------------------------
     // Bottoni
-    // --------------------------------------------------------
-
     'buttonsMessage',
     'buttonsResponseMessage',
 
-
-    // --------------------------------------------------------
     // Liste
-    // --------------------------------------------------------
-
     'listMessage',
     'listResponseMessage',
 
-
-    // --------------------------------------------------------
     // Template
-    // --------------------------------------------------------
-
     'templateMessage',
     'templateButtonReplyMessage',
 
-
-    // --------------------------------------------------------
     // Interactive
-    // --------------------------------------------------------
-
     'interactiveMessage',
     'interactiveResponseMessage',
 
-
-    // --------------------------------------------------------
     // Native Flow
-    // --------------------------------------------------------
-
     'nativeFlowMessage',
     'nativeFlowResponseMessage',
 
-
-    // --------------------------------------------------------
     // Pagamenti
-    // --------------------------------------------------------
-
     'requestPaymentMessage',
     'sendPaymentMessage',
     'paymentInviteMessage',
 
-
-    // --------------------------------------------------------
     // Catalogo / prodotti
-    // --------------------------------------------------------
-
     'productMessage',
     'productButtonReplyMessage',
     'catalogMessage',
     'orderMessage',
 
-
-    // --------------------------------------------------------
     // Inviti speciali
-    // --------------------------------------------------------
-
     'groupInviteMessage',
     'groupInviteMessageV4',
 
-
-    // --------------------------------------------------------
     // Call
-    // --------------------------------------------------------
-
     'callLogMessage',
 
-
-    // --------------------------------------------------------
     // Eventi
-    // --------------------------------------------------------
-
     'eventMessage',
 
-
-    // --------------------------------------------------------
     // Status / mention
-    // --------------------------------------------------------
-
     'statusMentionMessage',
 
-
-    // --------------------------------------------------------
     // Device
-    // --------------------------------------------------------
-
     'deviceSentMessage'
 
 ])
 
 
-/*
- * ============================================================
- * OTTIENE IL TIPO DEL MESSAGGIO
- * ============================================================
- *
- * NON prende semplicemente Object.keys()[0].
- *
- * Prima cerchiamo m.mtype.
- *
- * Poi cerchiamo solamente tipi conosciuti.
- *
- * Se non troviamo nulla:
- *
- *     return null
- *
- * E null PASSA.
- *
- * ============================================================
- */
-
 function getMessageType(m) {
-
-    /*
-     * Alcuni handler lo forniscono già.
-     */
 
     if (
         typeof m?.mtype === 'string' &&
@@ -160,10 +77,6 @@ function getMessageType(m) {
         return m.mtype
     }
 
-
-    /*
-     * Recuperiamo il contenitore del messaggio.
-     */
 
     const message =
         m?.message ||
@@ -174,15 +87,6 @@ function getMessageType(m) {
     if (!message)
         return null
 
-
-    /*
-     * Tipi che ci interessa riconoscere.
-     *
-     * NON significa che siano consentiti.
-     *
-     * Servono solamente per identificare
-     * correttamente i tipi.
-     */
 
     const knownTypes = [
 
@@ -228,8 +132,7 @@ function getMessageType(m) {
         // Blacklist
         ...BLOCKED_TYPES,
 
-        // Altri tipi tecnici che NON vogliamo
-        // trattare come blacklist automaticamente
+        // Tipi tecnici NON bloccati
         'protocolMessage',
         'senderKeyDistributionMessage',
         'secretEncryptedMessage',
@@ -251,35 +154,13 @@ function getMessageType(m) {
 
 
     /*
-     * Tipo sconosciuto.
-     *
-     * PASSERÀ.
+     * Tipo sconosciuto:
+     * passa.
      */
 
     return null
 }
 
-
-/*
- * ============================================================
- * TIPO INTERNO DEI WRAPPER
- * ============================================================
- *
- * Esempio:
- *
- * viewOnceMessage
- *      +-- imageMessage
- *
- *              -> PASSA
- *
- *
- * viewOnceMessage
- *      +-- interactiveMessage
- *
- *              -> BLOCCA
- *
- * ============================================================
- */
 
 function getInnerMessageType(m) {
 
@@ -296,72 +177,36 @@ function getInnerMessageType(m) {
     let inner = null
 
 
-    /*
-     * View Once
-     */
-
     if (message.viewOnceMessage) {
 
         inner =
             message.viewOnceMessage.message
-    }
 
-
-    /*
-     * View Once V2
-     */
-
-    else if (message.viewOnceMessageV2) {
+    } else if (message.viewOnceMessageV2) {
 
         inner =
             message.viewOnceMessageV2.message
-    }
 
-
-    /*
-     * View Once V2 Extension
-     */
-
-    else if (message.viewOnceMessageV2Extension) {
+    } else if (message.viewOnceMessageV2Extension) {
 
         inner =
             message.viewOnceMessageV2Extension.message
-    }
 
-
-    /*
-     * Ephemeral
-     */
-
-    else if (message.ephemeralMessage) {
+    } else if (message.ephemeralMessage) {
 
         inner =
             message.ephemeralMessage.message
-    }
 
-
-    /*
-     * Edited
-     */
-
-    else if (message.editedMessage) {
+    } else if (message.editedMessage) {
 
         inner =
             message.editedMessage.message
     }
 
 
-    /*
-     * Nessun contenuto interno.
-     */
-
     if (!inner)
         return null
 
-
-    /*
-     * Cerchiamo solamente tipi realmente noti.
-     */
 
     const knownTypes = [
 
@@ -416,33 +261,9 @@ function getInnerMessageType(m) {
     }
 
 
-    /*
-     * Sconosciuto.
-     */
-
     return null
 }
 
-
-/*
- * ============================================================
- * CONTROLLA SE DEVE ESSERE BLOCCATO
- * ============================================================
- *
- * Questa è la parte importante.
- *
- * NON esiste una whitelist decisionale.
- *
- * Se BLOCKED_TYPES contiene il tipo:
- *
- *     false
- *
- * Altrimenti:
- *
- *     true
- *
- * ============================================================
- */
 
 function shouldBlockMessage(m) {
 
@@ -451,9 +272,8 @@ function shouldBlockMessage(m) {
 
 
     /*
-     * Nessun tipo riconosciuto:
-     *
-     * PASSA.
+     * Nessun tipo:
+     * NON bloccare.
      */
 
     if (!type)
@@ -461,7 +281,7 @@ function shouldBlockMessage(m) {
 
 
     /*
-     * Tipo direttamente bloccato.
+     * Tipo direttamente nella blacklist.
      */
 
     if (
@@ -472,9 +292,7 @@ function shouldBlockMessage(m) {
 
 
     /*
-     * Wrapper.
-     *
-     * Controlliamo il contenuto interno.
+     * Controllo wrapper.
      */
 
     if (
@@ -490,9 +308,8 @@ function shouldBlockMessage(m) {
 
 
         /*
-         * Non sappiamo cosa c'è dentro:
-         *
-         * PASSA.
+         * Contenuto sconosciuto:
+         * NON bloccare.
          */
 
         if (!innerType)
@@ -500,8 +317,8 @@ function shouldBlockMessage(m) {
 
 
         /*
-         * Blocchiamo SOLO se il contenuto interno
-         * è esplicitamente nella blacklist.
+         * Blocca solo se il contenuto
+         * è esplicitamente blacklistato.
          */
 
         return BLOCKED_TYPES.has(
@@ -511,8 +328,7 @@ function shouldBlockMessage(m) {
 
 
     /*
-     * Qualsiasi altra cosa:
-     *
+     * Qualsiasi altro tipo:
      * PASSA.
      */
 
@@ -535,8 +351,7 @@ export async function before(
 ) {
 
     /*
-     * Messaggi del bot:
-     * ignorati.
+     * Messaggi del bot.
      */
 
     if (
@@ -556,8 +371,30 @@ export async function before(
 
 
     /*
-     * Admin:
-     * esclusi.
+     * ========================================================
+     * CONTROLLO ANTIBOT
+     * ========================================================
+     *
+     * IMPORTANTE:
+     *
+     * Se antibot non è esattamente true,
+     * il plugin si ferma immediatamente.
+     */
+
+    const chat =
+        global.db?.data?.chats?.[m.chat]
+
+
+    if (!chat)
+        return true
+
+
+    if (chat.antibot !== true)
+        return true
+
+
+    /*
+     * Admin esclusi.
      */
 
     if (isAdmin)
@@ -565,7 +402,7 @@ export async function before(
 
 
     /*
-     * Controlliamo SOLO la blacklist.
+     * Controlliamo la blacklist.
      */
 
     const shouldBlock =
@@ -573,9 +410,8 @@ export async function before(
 
 
     /*
-     * Se non è nella blacklist:
-     *
-     * NON FACCIAMO NULLA.
+     * Non è blacklist:
+     * nessuna azione.
      */
 
     if (!shouldBlock)
@@ -583,8 +419,7 @@ export async function before(
 
 
     /*
-     * Recuperiamo il tipo solamente
-     * per il log.
+     * Tipo per il log.
      */
 
     const type =
@@ -598,8 +433,8 @@ export async function before(
 
 
     /*
-     * Se il bot non è admin,
-     * non può cancellare/rimuovere.
+     * Bot non admin:
+     * non può intervenire.
      */
 
     if (!isBotAdmin)
@@ -642,9 +477,9 @@ export async function before(
 
 
     /*
-     * --------------------------------------------------------
+     * ========================================================
      * DELETE
-     * --------------------------------------------------------
+     * ========================================================
      */
 
     try {
@@ -671,9 +506,9 @@ export async function before(
 
 
     /*
-     * --------------------------------------------------------
+     * ========================================================
      * REMOVE
-     * --------------------------------------------------------
+     * ========================================================
      */
 
     try {

@@ -13,6 +13,7 @@ rows: [
 {title: "𝐚𝐧𝐭𝐢𝐭𝐫𝐚𝐯𝐚", description: null, rowId: `${usedPrefix}antitrava`},
 {title: "𝐚𝐧𝐭𝐢𝐩𝐚𝐤𝐢", description: null, rowId: `${usedPrefix}antipaki`},
 {title: "𝐦𝐨𝐝𝐨𝐚𝐝𝐦𝐢𝐧", description: null, rowId: `${usedPrefix}modoadmin`},
+{title: "𝐚𝐧𝐭𝐢𝐛𝐨𝐭", description: null, rowId: `${usedPrefix}antibot`},
 {title: "𝐚𝐮𝐭𝐨𝐬𝐭𝐢𝐜𝐤𝐞𝐫", description: null, rowId: `${usedPrefix}autosticker`},
 {title: "𝐚𝐧𝐭𝐢𝐩𝐚𝐠𝐚𝐦𝐞𝐧𝐭𝐨𝐬𝐩𝐚𝐦", description: null, rowId: `${usedPrefix}antipagamentospam`},
 ]}, ]
@@ -80,6 +81,13 @@ if (!(isAdmin || isOwner)) {
 return
 }}
 chat.antiLink = isEnable
+break
+case 'antibot':
+if (m.isGroup) {
+if (!(isAdmin || isOwner)) {
+return
+}}
+chat.antibot = isEnable
 break
 case 'antilinkgp':
 if (m.isGroup) {
