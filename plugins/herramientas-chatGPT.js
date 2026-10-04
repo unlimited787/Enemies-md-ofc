@@ -23,7 +23,7 @@ const api = global.api
     // Se l'API restituisce un errore, lo stampa nel terminale e lo invia in chat
     if (data.error) {
       console.log('ERRORE GROQ API:', data.error)
-      return m.reply(`Errore API: ${data.error.message}`)
+      return m.reply(`Errore API: ${data.error.message}, se è invalid fai .impostaapi con la api che ricevi da console.groq.com`)
     }
 
     let hasil = data.choices?.[0]?.message?.content
