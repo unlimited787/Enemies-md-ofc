@@ -52,8 +52,8 @@ let WA_VERSION
 
 async function loadCrypto() {
     const candidates = [
-        '@vkazee/baileys/lib/Utils/crypto.js',
-        '@whiskeysockets/baileys/lib/Utils/crypto.js'
+        '@trashcore/baileys/lib/Utils/crypto.js',
+        '@trashcore/baileys/lib/Utils/crypto.js'
     ]
 
     let lastError
@@ -88,8 +88,8 @@ async function loadCrypto() {
      */
 
     const defaultsCandidates = [
-        '@vkazee/baileys/lib/Defaults/index.js',
-        '@whiskeysockets/baileys/lib/Defaults/index.js'
+        '@trashcore/baileys/lib/Defaults/index.js',
+        '@trashcore/baileys/lib/Defaults/index.js'
     ]
 
     for (const path of defaultsCandidates) {
