@@ -1,4 +1,4 @@
-import os from 'os'
+﻿import os from 'os'
 import util from 'util'
 import sizeFormatter from 'human-readable'
 import MessageType from '@trashcore/baileys'
@@ -19,7 +19,7 @@ let neww = performance.now()
 let speed = neww - old
 let info = `
 
-✦✧ 𝐄ИΞM𝕀Ξ𝐒 𝐁Ꮻ𝐓 2.0 BETA1.1 ✧✦
+✦✧ 𝐄ИΞM𝕀Ξ𝐒 𝐁Ꮻ𝐓 2.0 ✧✦
 
 ┌──⭓ 𝐆𝐑𝐔𝐏𝐏𝐎 🛡
 │⭔ ${usedPrefix}kick / addio / ban @
@@ -51,10 +51,8 @@ let info = `
 │⭔ benvenuto
 │⭔ antilink
 │⭔ antilinkhard
-│⭔ antilinkgc 
 │⭔ antilinkgp
-│⭔ antispam⚠️
-│⭔ antipagamentospam
+│⭔ antispam
 │⭔ detect⚠️
 │⭔ antielimina⚠️
 │⭔ antiviewonce⚠️
@@ -115,6 +113,7 @@ let info = `
 │⭔ ${usedPrefix}andre (AI)
 │⭔ ${usedPrefix}wikipedia (txt)
 │⭔ ${usedPrefix}dox @
+│⭔ ${usedPrefix}pic @
 │⭔ ${usedPrefix}topgays
 │⭔ ${usedPrefix}topnazi
 │⭔ ${usedPrefix}slot
@@ -158,9 +157,7 @@ let info = `
 │⭔ ${usedPrefix}aggiornamento
 └───────⭓
 
-✦✧ 𝐄ИΞM𝕀Ξ𝐒 𝐁Ꮻ𝐓 2.0 BETA 1 ✧✦
-
-⚠️: COMANDI IN MANUTENZIONE, SARANNO SISTEMATI A BREVE!
+✦✧ 𝐄ИΞM𝕀Ξ𝐒 𝐁Ꮻ𝐓 2.0 ✧✦
 `.trim() 
 conn.reply(m.chat, info, m)
 let frocio = /chat.whatsapp.com\/([0-9A-Za-z]{20,24})/i

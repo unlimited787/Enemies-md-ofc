@@ -1,4 +1,4 @@
-let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isROwner }) => {
+﻿let handler = async (m, { conn, usedPrefix, command, args, isOwner, isAdmin, isROwner }) => {
 const sections = [
 {
 title: null,
@@ -35,12 +35,10 @@ switch (type) {
 case 'benvenuto':
 if (!m.isGroup) {
 if (!isOwner) {
-global.dfail('group', m, conn)
-throw false
+return
 }
 } else if (!isAdmin) {
-global.dfail('admin', m, conn)
-throw false
+return
 }
 chat.welcome = isEnable
 break
@@ -200,7 +198,7 @@ chat.spam = isEnable
 break
 case 'antipagamentospam':
 if (m.isGroup) {
-if (!(isOwner)) {
+if (!(isAdmin)) {
 return
 }}
 chat.antipagamentospam = isEnable

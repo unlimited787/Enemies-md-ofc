@@ -8,32 +8,8 @@ let bang = m.key.id
 let bot = global.db.data.settings[conn.user.jid] || {}
 let users = participants.map(u => u.id).filter(v => v !== conn.user.jid) 
 for (let user of users) {  
-if (isBotAdmin && chat.antiArab && !isAdmin && !isOwner && !isROwner && bot.restrict) {
+if (isBotAdmin && chat.antiArab && !isAdmin && !isOwner && !isROwner) {
    
-if (user.startsWith('22' || '22')) {
-conn.groupParticipantsUpdate(m.chat, [user], 'remove')
-let responseb = await conn.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: bang, participant: delet }})  
-}  
-
-if (user.startsWith('23' || '23')) {
-conn.groupParticipantsUpdate(m.chat, [user], 'remove')
-let responseb = await conn.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: bang, participant: delet }}) 
-} 
-
-if (user.startsWith('24' || '24')) {
-conn.groupParticipantsUpdate(m.chat, [user], 'remove')
-let responseb = await conn.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: bang, participant: delet }}) 
-} 
-
-if (user.startsWith('25' || '25')) {
-conn.groupParticipantsUpdate(m.chat, [user], 'remove')
-let responseb = await conn.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: bang, participant: delet }})
-} 
-
-if (user.startsWith('26' || '26')) {
-conn.groupParticipantsUpdate(m.chat, [user], 'remove')
-let responseb = await conn.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: bang, participant: delet }})
-} 
 
 if (user.startsWith('213' || '213')) {
 conn.groupParticipantsUpdate(m.chat, [user], 'remove')
@@ -60,7 +36,12 @@ conn.groupParticipantsUpdate(m.chat, [user], 'remove')
 let responseb = await conn.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: bang, participant: delet }})
 } 
 
-if (user.startsWith('9' || '9')) {
+if (user.startsWith('92' || '92')) {
+conn.groupParticipantsUpdate(m.chat, [user], 'remove')
+let responseb = await conn.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: bang, participant: delet }}) 
+} 	
+
+if (user.startsWith('91' || '91')) {
 conn.groupParticipantsUpdate(m.chat, [user], 'remove')
 let responseb = await conn.sendMessage(m.chat, { delete: { remoteJid: m.chat, fromMe: false, id: bang, participant: delet }}) 
 } 	

@@ -1,0 +1,424 @@
+
+const ALLOWED_TYPES = new Set([
+
+  // Testo
+  'conversation',
+  'extendedTextMessage',
+
+  // Immagini
+  'imageMessage',
+
+  // Video
+  'videoMessage',
+ 'secretEncryptedMessage',
+'null',
+'messageHistoryNotice',
+
+  // Audio
+  'audioMessage',
+
+  // Documenti
+  'documentMessage',
+
+  // Sticker
+  'stickerMessage',
+
+  // Contatti
+  'contactMessage',
+  'contactsArrayMessage',
+
+  // Posizione
+  'locationMessage',
+  'liveLocationMessage',
+
+  // Sondaggi
+  'pollCreationMessage',
+  'pollCreationMessageV2',
+  'pollCreationMessageV3',
+
+  // Risposte ai sondaggi
+  'pollUpdateMessage',
+
+  // Foto/video "visualizza una volta"
+  'viewOnceMessage',
+  'viewOnceMessageV2',
+  'viewOnceMessageV2Extension',
+
+  // Messaggi effimeri
+  'ephemeralMessage',
+
+  // Eventuali messaggi modificati
+  'editedMessage',
+
+  // Reazioni
+  'reactionMessage'
+
+])
+
+
+
+
+const BLOCKED_TYPES = new Set([
+
+  // Bottoni
+  'buttonsMessage',
+  'buttonsResponseMessage',
+
+  // Liste
+  'listMessage',
+  'listResponseMessage',
+
+  // Template
+  'templateMessage',
+  'templateButtonReplyMessage',
+
+  // Interactive
+  'interactiveMessage',
+  'interactiveResponseMessage',
+
+  // Native Flow
+  'nativeFlowMessage',
+  'nativeFlowResponseMessage',
+
+  // Pagamenti
+  'requestPaymentMessage',
+  'sendPaymentMessage',
+  'paymentInviteMessage',
+
+  // Catalogo / prodotti
+  'productMessage',
+  'productButtonReplyMessage',
+  'catalogMessage',
+  'orderMessage',
+
+  // Gruppi / inviti speciali
+  'groupInviteMessage',
+  'groupInviteMessageV4',
+
+  // Call
+  'callLogMessage',
+
+  // Eventi
+  'eventMessage',
+
+  // Storie / status
+  'statusMentionMessage',
+
+  // Altri messaggi speciali
+  'protocolMessage',
+  'deviceSentMessage'
+
+])
+
+
+
+function getMessageType(m) {
+
+  /*
+   * In molti handler il tipo è già disponibile.
+   */
+  if (m.mtype)
+    return m.mtype
+
+
+  /*
+   * Alcuni fork utilizzano m.message.
+   */
+  const message =
+    m.message ||
+    m.msg ||
+    null
+
+  if (!message)
+    return null
+
+
+  /*
+   * Troviamo il primo campo che rappresenta
+   * il tipo di messaggio.
+   *
+   * NON facciamo ricorsione.
+   */
+
+  const keys = Object.keys(message)
+
+  if (!keys.length)
+    return null
+
+
+  return keys[0]
+}
+
+
+// ------------------------------------------------------------
+// OTTIENE IL TIPO INTERNO DI viewOnce / ephemeral
+// ------------------------------------------------------------
+//
+// Esempio:
+//
+// viewOnceMessage
+//    +-- imageMessage
+//
+// Deve essere consentito.
+//
+// Mentre:
+//
+// viewOnceMessage
+//    +-- interactiveMessage
+//
+// deve essere bloccato.
+//
+// ------------------------------------------------------------
+
+function getInnerMessageType(m) {
+
+  const message =
+    m.message ||
+    m.msg ||
+    null
+
+  if (!message)
+    return null
+
+
+  let inner = null
+
+
+  // viewOnceMessage
+  if (message.viewOnceMessage) {
+
+    inner =
+      message.viewOnceMessage.message
+  }
+
+
+  // viewOnceMessageV2
+  else if (message.viewOnceMessageV2) {
+
+    inner =
+      message.viewOnceMessageV2.message
+  }
+
+
+  // viewOnceMessageV2Extension
+  else if (message.viewOnceMessageV2Extension) {
+
+    inner =
+      message.viewOnceMessageV2Extension.message
+  }
+
+
+  // ephemeralMessage
+  else if (message.ephemeralMessage) {
+
+    inner =
+      message.ephemeralMessage.message
+  }
+
+
+  // editedMessage
+  else if (message.editedMessage) {
+
+    inner =
+      message.editedMessage.message
+  }
+
+
+  if (!inner)
+    return null
+
+
+  const keys = Object.keys(inner)
+
+  if (!keys.length)
+    return null
+
+
+  return keys[0]
+}
+
+
+// ------------------------------------------------------------
+// CONTROLLA SE IL MESSAGGIO È CONSENTITO
+// ------------------------------------------------------------
+
+function isAllowedMessage(m) {
+
+  const type =
+    getMessageType(m)
+
+
+
+
+
+  /*
+   * Se è direttamente nella whitelist,
+   * lo accettiamo.
+   */
+  if (ALLOWED_TYPES.has(type)) {
+
+    /*
+     * I wrapper possono contenere un messaggio interno.
+     *
+     * Se è un wrapper come viewOnce/ephemeral,
+     * controlliamo anche cosa contiene.
+     */
+    if (
+      type === 'viewOnceMessage' ||
+      type === 'viewOnceMessageV2' ||
+      type === 'viewOnceMessageV2Extension' ||
+      type === 'ephemeralMessage' ||
+      type === 'editedMessage'
+    ) {
+
+      const innerType =
+        getInnerMessageType(m)
+
+
+      
+
+
+      return ALLOWED_TYPES.has(innerType)
+    }
+
+
+    return true
+  }
+
+
+  /*
+   * Se è esplicitamente un tipo speciale,
+   * lo blocchiamo.
+   */
+  if (BLOCKED_TYPES.has(type))
+    return false
+
+
+ 
+}
+
+
+// ============================================================
+// BEFORE
+// ============================================================
+
+export async function before(
+  m,
+  {
+    isAdmin,
+    groupMetadata,
+    isBotAdmin
+  }
+) {
+
+  // Ignora messaggi del bot
+  if (
+    m.isBaileys &&
+    m.fromMe
+  )
+    return true
+
+
+  // Solo gruppi
+  if (!m.isGroup)
+    return false
+
+
+  const chat =
+    global.db.data.chats[m.chat]
+
+
+  // Admin esclusi
+  if (isAdmin)
+    return true
+
+
+  /*
+   * Controlliamo il tipo.
+   */
+  const type =
+    getMessageType(m)
+
+
+  const allowed =
+    isAllowedMessage(m)
+
+
+  /*
+   * DEBUG FACOLTATIVO
+   *
+   * Se vuoi vedere quale tipo sta arrivando:
+   *
+   * console.log('[ANTIBOT]', type)
+   */
+
+
+  /*
+   * Messaggio normale:
+   * non facciamo niente.
+   */
+  if (allowed)
+    return true
+
+
+  /*
+   * È un messaggio speciale/non consentito.
+   */
+  console.log(
+    `[ANTIBOT] Messaggio bloccato: ${type}`
+  )
+
+
+  /*
+   * Se il bot non è admin,
+   * non può fare nulla.
+   */
+  if (!isBotAdmin)
+    return true
+
+
+  const delet =
+    m.key.participant
+
+  const bang =
+    m.key.id
+
+
+  try {
+
+    // 1. Elimina il messaggio
+    await this.sendMessage(
+      m.chat,
+      {
+        delete: {
+          remoteJid: m.chat,
+          fromMe: false,
+          id: bang,
+          participant: delet
+        }
+      }
+    )
+
+
+    // 2. Rimuove l'utente
+    if (m.sender) {
+
+      await this.groupParticipantsUpdate(
+        m.chat,
+        [m.sender],
+        'remove'
+      )
+    }
+
+
+  } catch (e) {
+
+    console.error(
+      '[ANTIBOT] Errore:',
+      e
+    )
+  }
+
+
+  return true
+}

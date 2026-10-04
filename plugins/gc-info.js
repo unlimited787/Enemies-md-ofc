@@ -1,4 +1,4 @@
-let handler = async (m, { conn, participants, groupMetadata }) => {
+﻿let handler = async (m, { conn, participants, groupMetadata }) => {
 const pp = await conn.profilePictureUrl(m.chat, 'image').catch(_ => null) || './src/avatar_contact.png'
 const { antiToxic, antiTraba, antiviewonce, isBanned, welcome, detect, sWelcome, sBye, sPromote, sDemote, antiLink, antiLink2, modohorny, autosticker, modoadmin, audios, delete: del } = global.db.data.chats[m.chat]
 const groupAdmins = participants.filter(p => p.admin)
@@ -9,13 +9,13 @@ Nome
 ${groupMetadata.subject}
 
 Descrizione
-${groupMetadata.desc?.toString() || 'nessuna descrizione'}
+${groupMetadata.desc || 'nessuna descrizione'}
 
 Membri
 ${participants.length} Participanti
 
 Founder
-@${owner.split('@')[0]}
+@${owner}
 
 Admin
 ${listAdmin}

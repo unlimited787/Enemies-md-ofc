@@ -1,60 +1,179 @@
-let handler = m => m
-handler.before = async function (m, {conn, isAdmin, isBotAdmin, isOwner, isROwner} ) {  
-if (!m.isGroup) return !1
-let chat = global.db.data.chats[m.chat]
-let delet = m.key.participant
-let bang = m.key.id
-let bot = global.db.data.settings[this.user.jid] || {}
-let user = global.db.data.users[m.sender]
+﻿let handler = m => m
 
-this.spam = this.spam ? this.spam : {}
-if (!(m.sender in this.spam)) {
-let spaming = {
-jid: await m.sender, 
-spam: 0,
-lastspam: 0
+handler.before = async function (
+  m,
+  {
+    conn,
+    isAdmin,
+    isBotAdmin,
+    isOwner,
+    isROwner
+  }
+) {
+
+
+  if (!m.isGroup)
+    return true
+
+
+  const chat =
+    global.db.data.chats[m.chat]
+
+  if (!chat?.antiSpam)
+    return true
+
+
+  const MAX_MESSAGES = 8
+  const WINDOW = 4000
+
+
+ 
+  if (!this.spam)
+    this.spam = {}
+
+
+  if (!this.spam[m.chat])
+    this.spam[m.chat] = {}
+
+
+  const sender =
+    m.sender
+
+
+ 
+  if (
+    isAdmin ||
+    isOwner ||
+    isROwner
+  ) {
+    return true
+  }
+
+
+ 
+  if (!this.spam[m.chat][sender]) {
+
+    this.spam[m.chat][sender] = []
+  }
+
+
+  const now =
+    Date.now()
+
+
+  this.spam[m.chat][sender].push(now)
+
+
+ 
+  this.spam[m.chat][sender] =
+    this.spam[m.chat][sender].filter(
+      timestamp =>
+        now - timestamp <= WINDOW
+    )
+
+
+  const messages =
+    this.spam[m.chat][sender].length
+
+
+ 
+  if (messages < MAX_MESSAGES)
+    return true
+
+
+  
+  this.spam[m.chat][sender] = []
+
+
+  if (!isBotAdmin)
+    return true
+
+
+  
+  const bot =
+    global.db.data.settings[this.user.jid] || {}
+
+
+  if (!bot.restrict)
+    return true
+
+
+ 
+  if (
+    isAdmin ||
+    isOwner ||
+    isROwner
+  ) {
+    return true
+  }
+
+
+  
+  const user =
+    global.db.data.users[sender]
+
+
+  if (!user)
+    return true
+
+
+  const COOLDOWN =
+    25 * 60 * 1000
+
+
+  const lastAction =
+    Number(user.antispam || 0)
+
+
+  
+  if (
+    lastAction &&
+    now - lastAction < COOLDOWN
+  ) {
+    return true
+  }
+
+
+  
+  user.antispam =
+    now
+
+
+  const testo =
+    '𝐒𝐏𝐀𝐌 𝐑𝐈𝐋𝐄𝐕𝐀𝐓𝐎 ⛔'
+
+
+  try {
+
+   
+    await conn.reply(
+      m.chat,
+      testo,
+      m,
+      {
+        mentions: [sender]
+      }
+    )
+
+
+    
+    await conn.groupParticipantsUpdate(
+      m.chat,
+      [sender],
+      'remove'
+    )
+
+  } catch (e) {
+
+    console.error(
+      '[ANTISPAM]',
+      e
+    )
+  }
+
+
+  return true
 }
-this.spam[spaming.jid] = spaming
-  
-} else try {
-this.spam[m.sender].spam += 1
-  
-if (new Date - this.spam[m.sender].lastspam > 4000) {
-if (this.spam[m.sender].spam > 7) {
-this.spam[m.sender].spam = 0
-  
-this.spam[m.sender].lastspam = new Date * 1
-let tiempo = 300000 * 5
-let time = user.antispam + tiempo * 1
-let texto = `𝐒𝐏𝐀𝐌 𝐑𝐈𝐋𝐄𝐕𝐀𝐓𝐎 ⛔` 
 
-if (!chat.antiSpam) return
-if (new Date - user.antispam < tiempo * 1) return
-if (isBotAdmin && chat.antiSpam && !isAdmin && !isOwner && !isROwner && bot.restrict) {
-await conn.reply(m.chat, texto,  m, { mentions: this.parseMention(texto) })
 
-conn.groupParticipantsUpdate(m.chat, [m.sender], 'remove')
-user.antispam = new Date * 1  
-  
-} else {
-this.spam[m.sender].spam = 0
-this.spam[m.sender].lastspam = new Date * 1
-}}}
-  
-} catch (e) {
-console.log(e)
-}}
 export default handler
-
-function msToTime(duration) {
-var milliseconds = parseInt((duration % 1000) / 100),
-seconds = Math.floor((duration / 1000) % 60),
-minutes = Math.floor((duration / (1000 * 60)) % 60),
-hours = Math.floor((duration / (1000 * 60 * 60)) % 24)
-
-hours = (hours < 10) ? "0" + hours : hours
-minutes = (minutes < 10) ? "0" + minutes : minutes
-seconds = (seconds < 10) ? "0" + seconds : seconds
-
-return minutes + " m y " + seconds + " s " 
-}

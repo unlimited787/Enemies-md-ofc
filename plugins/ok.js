@@ -1,4 +1,4 @@
-import fetch from 'node-fetch'
+﻿import fetch from 'node-fetch'
 let handler = async (m, { conn, command, text, usedPrefix, isAdmin }) => {
 try {
 const buttons = [
@@ -12,5 +12,5 @@ await conn.sendMessage(m.chat, buttonMessage, { quoted: m })
 return}}
 handler.help = ['menu'].map(v => v + ' <pencarian>')
 handler.tags = ['downloader']
-handler.command = /^benvenuto|antilink|antilinkhard|antispam|detect|antielimina|antiviewonce|antitrava|antipaki|modoadmin|autosticker|restrict|antiprivato|sologruppo|autoread$/i
+handler.command = /^benvenuto|antilink|antilinkhard|antilinkgp|antipagamentospam|antispam|detect|antielimina|antiviewonce|antitrava|antipaki|modoadmin|autosticker|restrict|antiprivato|sologruppo|autoread$/i
 export default handler
