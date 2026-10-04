@@ -2,18 +2,18 @@ import fetch from 'node-fetch'
 
 let handler = async (m, { text, usedPrefix, command }) => {
   if (!text) return m.reply(`Inserisci un testo! Esempio: ${usedPrefix + command} ciao`)
-
+const api = global.api
   try {
     await conn.sendPresenceUpdate('composing', m.chat)
 
     let response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': 'Bearer inseriscilatuaapi',
+        'Authorization': 'Bearer ' + api,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'groq/compound',
+        model: 'openai/gpt-oss-120b',
         messages: [{ role: 'user', content: text }]
       })
     })
