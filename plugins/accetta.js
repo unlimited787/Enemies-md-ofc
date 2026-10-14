@@ -1,15 +1,13 @@
+
 let handler = async (m, { conn }) => {
   const requests = await conn.groupRequestParticipantsList(m.chat)
 
-  if (!requests.length) {
-    return m.reply('Non ci sono richieste di ingresso in attesa.')
-  }
+  if (!requests.length) return m.reply('Non ci sono richieste di ingresso in attesa.')
 
-  for (const request of requests) {
-    await conn.groupRequestParticipantsUpdate(m.chat, [request.jid], 'approve')
-  }
+  const jids = requests.map(request => request.jid)
+  await conn.groupRequestParticipantsUpdate(m.chat, jids, 'approve')
 
-  m.reply(`✅ Accettate ${requests.length} richieste di ingresso.`)
+  m.reply(`✅ Elaborate ${jids.length} richieste di ingresso.`)
 }
 
 handler.command = ['accetta']
