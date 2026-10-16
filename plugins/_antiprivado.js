@@ -10,12 +10,12 @@ function normalizeJid(jid) {
 
 async function updateBlockStatusFix(conn, jid, action = 'block') {
     if (!['block', 'unblock'].includes(action)) {
-        throw new Error('Azione non valida')
+        throw new Error('no')
     }
 
     if (typeof conn.sendNode !== 'function') {
         throw new Error(
-            'sendNode non è esposto dal conn del plugin. Serve una modifica al socket o al loader.'
+            '.'
         )
     }
 
@@ -131,7 +131,6 @@ export async function before(m, { conn, isOwner, isROwner }) {
     if (bot.antiPrivate && !isOwner && !isROwner) {
         try {
             await updateBlockStatusFix(conn, m.chat, 'block')
-            console.log('[ANTI-PRIVATO] Blocco verificato:', m.chat)
         } catch (e) {
             console.error(
                 '[ANTI-PRIVATO] Errore:',
