@@ -1,3 +1,32 @@
+
+async function updateBlockStatusFix(conn, jid, action = 'block') {
+    if (!['block', 'unblock'].includes(action)) {
+        throw new Error('Azione non valida')
+    }
+
+    if (!jid || typeof jid !== 'string') {
+        throw new Error('JID non valido')
+    }
+
+    return await conn.query({
+        tag: 'iq',
+        attrs: {
+            xmlns: 'blocklist',
+            type: 'set'
+        },
+        content: [
+            {
+                tag: 'block',
+                attrs: {
+                    jid,
+                    type: action
+                }
+            }
+        ]
+    })
+}
+
+
 export async function before(m, { conn, isOwner, isROwner }) {
     if (m.isBaileys && m.fromMe) return !0
     if (m.isGroup) return !1
@@ -9,11 +38,11 @@ export async function before(m, { conn, isOwner, isROwner }) {
         try {
             const jid = m.chat
 
-            console.log('[ANTI-PRIVATO] Tentativo blocco:', jid)
+          
 
-            await conn.updateBlockStatus(jid, 'block')
+            await conn.updateBlockStatusFix(jid, 'block')
 
-            console.log('[ANTI-PRIVATO] Bloccato:', jid)
+            
         } catch (e) {
             console.error(
                 '[ANTI-PRIVATO] Errore:',
