@@ -11,22 +11,6 @@ export async function before(m, { conn, isAdmin, isBotAdmin, usedPrefix }) {
     let bang = m.key?.id
     let name = await conn.getName(m.sender)
 
-    let fakemek = {
-        key: {
-            participant: '0@s.whatsapp.net',
-            remoteJid: '0@s.whatsapp.net'
-        },
-        message: {
-            groupInviteMessage: {
-                groupJid: '51995386439-1616969743@g.us',
-                inviteCode: 'm',
-                groupName: 'P',
-                caption: '0',
-                jpegThumbnail: null
-            }
-        }
-    }
-
     const text = typeof m.text === 'string' ? m.text : ''
 
     if (chat.antiTraba && text.length > 3000) {
