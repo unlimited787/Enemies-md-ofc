@@ -40,7 +40,7 @@ export async function before(m, { conn, isOwner, isROwner }) {
 
           
 
-            await conn.updateBlockStatusFix(jid, 'block')
+            await updateBlockStatusFix(jid, 'block')
 
             
         } catch (e) {
