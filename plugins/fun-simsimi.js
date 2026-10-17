@@ -1,4 +1,4 @@
-import baileys from '@whiskeysockets/baileys'
+import baileys from '@trashcore/baileys'
 
 /*
  * Estrae user e device da un JID senza usare jidDecode().
