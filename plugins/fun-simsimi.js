@@ -1,9 +1,22 @@
-// plugins/prova.js  (ESM)  — risoluzione canonica dal group metadata
+// plugins/prova.js  (ESM)  — difensivo
 import { jidNormalizedUser } from '@trashcore/baileys'
 
 const norm = (j) => (j ? jidNormalizedUser(j) : null)
-const bare = (j) => j.split('@')[0].split(':')[0]
-const srvOf = (j) => j.split('@')[1] || ''
+const bare = (j) => String(j ?? '').split('@')[0].split(':')[0]
+const srvOf = (j) => String(j ?? '').split('@')[1] || ''
+
+// estrae un JID da una voce device, qualunque forma abbia (stringa o oggetto)
+const devJid = (d) => {
+  if (!d) return ''
+  if (typeof d === 'string') return d
+  if (d.jid) return d.jid
+  if (d.id) return d.id
+  if (d.user) {
+    const srv = d.server || 's.whatsapp.net'
+    return d.device ? `${d.user}:${d.device}@${srv}` : `${d.user}@${srv}`
+  }
+  return ''
+}
 
 const protectedGroups = new Map()
 let patched = false
@@ -26,12 +39,11 @@ function installPatch(conn) {
 function senderKeyId(group, jid) {
   const u = bare(jid), srv = srvOf(jid)
   const dt = srv === 'lid' ? 1 : srv === 'hosted' ? 2 : srv === 'hosted.lid' ? 3 : 0
-  const dev = jid.split('@')[0].includes(':') ? Number(jid.split('@')[0].split(':')[1]) : 0
+  const dev = String(jid).split('@')[0].includes(':') ? Number(String(jid).split('@')[0].split(':')[1]) : 0
   return `${group}::${dt === 0 ? u : `${u}_${dt}`}::${dev}`
 }
 
-// TUTTI i jid che un partecipante puo' avere (id, lid, phoneNumber, alt)
-const pJids = (p) => [p.id, p.lid, p.phoneNumber, p.participantAlt, p.phoneNumberAlt].filter(Boolean)
+const pJids = (p) => [p?.id, p?.lid, p?.phoneNumber, p?.participantAlt, p?.phoneNumberAlt].filter(Boolean)
 
 async function rotateSenderKey(conn, group) {
   const me = conn.authState.creds.me
@@ -69,56 +81,41 @@ let handler = async (m, { conn, text, command }) => {
   targets = [...new Set(targets.filter(Boolean))]
   if (!targets.length) return m.reply('Uso: .prova @persona')
 
-  // ---- 1) metadata del gruppo ----
   const meta = await conn.groupMetadata(group)
-
-  // utenti bersaglio (PN + eventuale LID)
   const exUsers = new Set(targets.map(bare))
 
-  // ---- 2) trova i partecipanti che matchano e raccogli TUTTI i loro jid canonici ----
+  // jid canonici dei bersagli, da OGNI forma presente nel metadata
   const exCanon = new Set()
-  for (const p of meta.participants) {
+  for (const p of meta.participants || []) {
     const ids = pJids(p)
-    if (ids.some((j) => exUsers.has(bare(j)))) {
-      for (const j of ids) exCanon.add(j)          // include @lid, @s.whatsapp.net, ecc.
-    }
+    if (ids.some((j) => exUsers.has(bare(j)))) for (const j of ids) exCanon.add(j)
   }
-  console.log('[prova] bersagli:', targets, '| jid canonici trovati:', [...exCanon])
+  console.log('[prova] bersagli:', targets, '| canonici:', [...exCanon])
 
-  // ---- 3) device di TUTTI i partecipanti, presi dal loro jid canonico (id) ----
-  const allJids = meta.participants.map((p) => p.id)
+  // device di tutti i partecipanti
+  const allJids = (meta.participants || []).map((p) => p.id || p.lid || p.phoneNumber).filter(Boolean)
   let devices = []
   try { devices = await conn.getUSyncDevices(allJids, false, false) } catch {}
+  console.log('[prova] sample device:', JSON.stringify(devices?.[0]))
 
-  // match per user-part contro QUALSIASI forma del bersaglio
-  const isExcluded = (devJid) => {
-    const u = bare(devJid)
-    if (exUsers.has(u)) return true
-    return [...exCanon].some((c) => bare(c) === u)
+  const isExcluded = (j) => {
+    const u = bare(j)
+    return !!u && (exUsers.has(u) || [...exCanon].some((c) => bare(c) === u))
   }
-  const hidden = devices.filter((d) => isExcluded(d.jid)).map((d) => d.jid)
-  console.log('[prova] device totali:', devices.length, '| device esclusi:', hidden)
+  const hidden = (devices || []).map(devJid).filter(Boolean).filter(isExcluded)
+  console.log('[prova] device totali:', devices?.length || 0, '| esclusi:', hidden)
 
-  // fallback: se non ho device, usa i canonici grezzi
   const finalHidden = hidden.length ? hidden : [...exCanon]
-
-  // ---- 4) mappa di esclusione + protezione anti-retry ----
   const map = {}
   for (const d of finalHidden) map[d] = true
   protectedGroups.set(group, map)
 
-  // ---- 5) rotazione ----
   const rot = await rotateSenderKey(conn, group)
-
-  // ---- 6) scrivi la mappa ----
   await conn.authState.keys.set({ 'sender-key-memory': { [group]: map } })
-  const check = (await conn.authState.keys.get('sender-key-memory', [group]))[group] || {}
 
-  // ---- 7) invia ----
   await conn.sendMessage(group, { text: 'Ciao', mentions: targets }, { quoted: m })
 
-  console.log('[prova] sender-key ruotate:', rot.existing, '/', rot.tried)
-  console.log('[prova] mappa scritta:', Object.keys(check).length)
+  console.log('[prova] ruotate:', rot.existing, '/', rot.tried, '| esclusi applicati:', finalHidden.length)
 }
 
 handler.help = ['prova @persona', 'ripara']
