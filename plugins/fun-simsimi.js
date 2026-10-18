@@ -1,9 +1,10 @@
-// plugins/prova.js  (ESM)
+// plugins/prova.js  (ESM) — DEFINITIVO
 import { jidNormalizedUser } from '@trashcore/baileys'
 
 const norm = (j) => (j ? jidNormalizedUser(j) : null)
 const bare = (j) => String(j ?? '').split('@')[0].split(':')[0]
-const srvOf = (j) => String(j ?? '').split('@')[1] || ''
+
+// estrae un JID da una voce device in QUALSIASI forma
 const devJid = (d) => {
   if (!d) return ''
   if (typeof d === 'string') return d
@@ -12,41 +13,35 @@ const devJid = (d) => {
   if (d.user) { const s = d.server || 's.whatsapp.net'; return d.device ? `${d.user}:${d.device}@${s}` : `${d.user}@${s}` }
   return ''
 }
+// tutti i JID possibili di un partecipante
 const pJids = (p) => [p?.id, p?.lid, p?.phoneNumber, p?.participantAlt, p?.phoneNumberAlt].filter(Boolean)
 
 const protectedGroups = new Map()
 let patched = false
 function installPatch(conn) {
-  if (patched) return
+  if (patched) return true
   const keys = conn?.authState?.keys
-  if (!keys?.set) return
-  const origSet = keys.set.bind(keys)
+  if (!keys?.set) return false
+  const orig = keys.set.bind(keys)
   keys.set = async (data) => {
     const skm = data?.['sender-key-memory']
     if (skm) for (const g of Object.keys(skm)) {
       if (skm[g] === null && protectedGroups.has(g)) skm[g] = { ...protectedGroups.get(g) }
     }
-    return origSet(data)
+    return orig(data)
   }
   patched = true
+  return true
 }
 
-function senderKeyId(group, jid) {
-  const u = bare(jid), srv = srvOf(jid)
-  const dt = srv === 'lid' ? 1 : srv === 'hosted' ? 2 : srv === 'hosted.lid' ? 3 : 0
-  const dev = String(jid).split('@')[0].includes(':') ? Number(String(jid).split('@')[0].split(':')[1]) : 0
-  return `${group}::${dt === 0 ? u : `${u}_${dt}`}::${dev}`
-}
-
+// rotazione: prova TUTTE le varianti (utente PN e LID, suffissi, device) e cancella quelle reali
 async function rotate(conn, group) {
   const me = conn.authState.creds.me
   const ids = new Set()
   for (const jid of [me.id, me.lid].filter(Boolean)) {
-    const u = bare(jid), srv = srvOf(jid)
-    const dts = srv === 'lid' ? [1] : srv === 'hosted' ? [2] : srv === 'hosted.lid' ? [3] : [0]
-    for (const dt of dts) {
-      const su = dt === 0 ? u : `${u}_${dt}`
-      for (const dev of new Set([0, me.deviceId].filter((x) => x != null))) ids.add(`${group}::${su}::${dev}`)
+    const u = bare(jid)
+    for (const suf of ['', '_0', '_1', '_2', '_3']) {
+      for (const dev of new Set([0, me.deviceId].filter((x) => x != null))) ids.add(`${group}::${u}${suf}::${dev}`)
     }
   }
   const all = [...ids]
@@ -58,18 +53,45 @@ async function rotate(conn, group) {
   return { existing, tried: all.length }
 }
 
-async function rawDevices(conn, meta) {
+// device di tutti i partecipanti (come fa il motore)
+async function allDevices(conn, meta) {
   const jids = (meta.participants || []).map((p) => p.id || p.lid || p.phoneNumber).filter(Boolean)
-  for (const useCache of [true, false]) {
-    try { const r = await conn.getUSyncDevices(jids, useCache, false); if (r?.length) return r } catch {}
+  for (const c of [true, false]) {
+    try { const r = await conn.getUSyncDevices(jids, c, false); if (r?.length) return r.map(devJid).filter(Boolean) } catch {}
   }
   return []
+}
+
+// risolve i device del bersaglio incrociando usync + metadata + mappa del motore
+async function resolveExcluded(conn, meta, targets) {
+  const users = new Set(targets.map(bare))
+
+  // usync diretto sul bersaglio (copre la conversione PN->LID)
+  for (const c of [true, false]) {
+    try { for (const d of await conn.getUSyncDevices(targets, c, false)) { const j = devJid(d); if (j) users.add(bare(j)) } } catch {}
+  }
+  // metadata: se una voce matcha, prendi TUTTI i suoi JID (id/lid/phone)
+  for (const p of meta.participants || []) {
+    const ids = pJids(p)
+    if (ids.some((j) => users.has(bare(j)))) for (const j of ids) users.add(bare(j))
+  }
+
+  const all = await allDevices(conn, meta)
+
+  // unisci anche le chiavi reali gia' scritte dal motore nella mappa (ground truth)
+  try {
+    const cur = (await conn.authState.keys.get('sender-key-memory', [meta.id || meta.jid]))[meta.id || meta.jid] || {}
+    for (const k of Object.keys(cur)) if (!all.includes(k)) all.push(k)
+  } catch {}
+
+  const excluded = all.filter((j) => users.has(bare(j)))
+  return { users, all, excluded }
 }
 
 let handler = async (m, { conn, text, command }) => {
   const group = m.chat
   if (!group?.endsWith('@g.us')) return
-  installPatch(conn)
+  const okPatch = installPatch(conn)
 
   if (command === 'ripara') {
     protectedGroups.delete(group)
@@ -83,52 +105,33 @@ let handler = async (m, { conn, text, command }) => {
   if (!targets.length) return m.reply('Uso: .prova @persona')
 
   const meta = await conn.groupMetadata(group)
-  const raw = await rawDevices(conn, meta)
-  console.log('[prova] sample device RAW:', JSON.stringify(raw?.[0]))
-  console.log('[prova] device totali:', raw.length)
+  const { users, all, excluded } = await resolveExcluded(conn, meta, targets)
 
-  const allDev = raw.map(devJid).filter(Boolean)
-  const exUsers = new Set(targets.map(bare))
-  const exCanon = new Set()
-  for (const p of meta.participants || []) {
-    const ids = pJids(p)
-    if (ids.some((j) => exUsers.has(bare(j)))) for (const j of ids) exCanon.add(j)
-  }
-  console.log('[prova] bersagli:', targets, '| canonici:', [...exCanon])
+  console.log('[prova] patch:', okPatch, '| device totali:', all.length, '| sample:', all[0])
+  console.log('[prova] user bersaglio:', [...users])
+  console.log('[prova] device esclusi:', excluded.length, excluded.slice(0, 4))
 
-  const cur = (await conn.authState.keys.get('sender-key-memory', [group]))[group] || {}
-  const curKeys = Object.keys(cur)
-  console.log('[prova] chiavi mappa motore:', curKeys.length, curKeys.slice(0, 6))
-
-  const match = (u) => u && (exUsers.has(u) || [...exCanon].some((c) => bare(c) === u))
-  const fromMap = curKeys.filter((k) => match(bare(k)))
-  const fromDev = allDev.filter((k) => match(bare(k)))
-  const excluded = [...new Set([...fromMap, ...fromDev])]
-  console.log('[prova] esclusi -> da mappa:', fromMap.length, '| da device:', fromDev.length, '| tot:', excluded.length)
-
-  // ---- TEST: tutti esclusi => nessuno deve leggere ----
+  // ---- TEST memoria+rotazione: tutti esclusi => nessuno deve leggere ----
   if (command === 'provat') {
-    const all = {}
-    for (const k of [...new Set([...curKeys, ...allDev])]) all[k] = true
-    protectedGroups.set(group, all)
+    const mapAll = {}
+    for (const j of all) mapAll[j] = true
+    protectedGroups.set(group, mapAll)
     const r = await rotate(conn, group)
-    await conn.authState.keys.set({ 'sender-key-memory': { [group]: all } })
+    await conn.authState.keys.set({ 'sender-key-memory': { [group]: mapAll } })
     await conn.sendMessage(group, { text: 'TEST: nessuno deve leggere' }, { quoted: m })
-    console.log('[provat] all-true:', Object.keys(all).length, '| ruotate:', r.existing, '/', r.tried)
+    console.log('[provat] ruotate:', r.existing, '/', r.tried)
     return
   }
 
-  const finalExcluded = excluded.length ? excluded : [...exCanon]
   const map = {}
-  for (const k of finalExcluded) map[k] = true
+  for (const j of (excluded.length ? excluded : [...users])) map[j] = true
   protectedGroups.set(group, map)
 
   const r = await rotate(conn, group)
   await conn.authState.keys.set({ 'sender-key-memory': { [group]: map } })
   await conn.sendMessage(group, { text: 'Ciao', mentions: targets }, { quoted: m })
 
-  const after = (await conn.authState.keys.get('sender-key-memory', [group]))[group] || {}
-  console.log('[prova] ruotate:', r.existing, '/', r.tried, '| mappa dopo invio:', Object.keys(after).length)
+  console.log('[prova] ruotate:', r.existing, '/', r.tried, '| esclusi applicati:', Object.keys(map).length)
 }
 
 handler.help = ['prova @persona', 'provat', 'ripara']
