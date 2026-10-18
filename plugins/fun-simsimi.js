@@ -1,190 +1,128 @@
+// plugins/prova.js  (ESM)  — risoluzione canonica dal group metadata
+import { jidNormalizedUser } from '@trashcore/baileys'
 
-import baileys from '@trashcore/baileys'
+const norm = (j) => (j ? jidNormalizedUser(j) : null)
+const bare = (j) => j.split('@')[0].split(':')[0]
+const srvOf = (j) => j.split('@')[1] || ''
 
-function parseJid(jid) {
-    if (typeof jid !== 'string') return null
-    const at = jid.lastIndexOf('@')
-    if (at < 1) return null
-    const left = jid.slice(0, at)
-    const server = jid.slice(at + 1)
-    const colon = left.lastIndexOf(':')
-    const user = colon < 0 ? left : left.slice(0, colon)
-    const device = colon < 0 ? 0 : Number(left.slice(colon + 1))
-    if (!user || !server) return null
-    return { user, device: Number.isFinite(device) ? device : 0, server }
+const protectedGroups = new Map()
+let patched = false
+
+function installPatch(conn) {
+  if (patched) return
+  const keys = conn?.authState?.keys
+  if (!keys?.set) return
+  const origSet = keys.set.bind(keys)
+  keys.set = async (data) => {
+    const skm = data?.['sender-key-memory']
+    if (skm) for (const g of Object.keys(skm)) {
+      if (skm[g] === null && protectedGroups.has(g)) skm[g] = { ...protectedGroups.get(g) }
+    }
+    return origSet(data)
+  }
+  patched = true
 }
 
-function normalizeEntries(entries) {
-    if (!Array.isArray(entries)) return []
-    const result = new Map()
-
-    for (const entry of entries) {
-        const jid = typeof entry === 'string' ? entry : entry?.jid
-        const parsed = parseJid(jid)
-        if (!parsed) continue
-
-        const key = `${parsed.user}@${parsed.server}`
-        if (!result.has(key)) {
-            result.set(key, {
-                user: parsed.user,
-                server: parsed.server,
-                devices: new Map()
-            })
-        }
-
-        result.get(key).devices.set(parsed.device, jid)
-    }
-
-    return [...result.values()].map(account => ({
-        user: account.user,
-        server: account.server,
-        devices: [...account.devices.entries()].map(([device, jid]) => ({
-            device,
-            jid
-        }))
-    }))
+function senderKeyId(group, jid) {
+  const u = bare(jid), srv = srvOf(jid)
+  const dt = srv === 'lid' ? 1 : srv === 'hosted' ? 2 : srv === 'hosted.lid' ? 3 : 0
+  const dev = jid.split('@')[0].includes(':') ? Number(jid.split('@')[0].split(':')[1]) : 0
+  return `${group}::${dt === 0 ? u : `${u}_${dt}`}::${dev}`
 }
 
-async function queryDevices(conn, jids) {
-    if (typeof conn.getUSyncDevices === 'function') {
-        return {
-            method: 'getUSyncDevices',
-            entries: await conn.getUSyncDevices(jids, false, false)
-        }
+// TUTTI i jid che un partecipante puo' avere (id, lid, phoneNumber, alt)
+const pJids = (p) => [p.id, p.lid, p.phoneNumber, p.participantAlt, p.phoneNumberAlt].filter(Boolean)
+
+async function rotateSenderKey(conn, group) {
+  const me = conn.authState.creds.me
+  const ids = new Set()
+  for (const jid of [me.id, me.lid].filter(Boolean)) {
+    const u = bare(jid), srv = srvOf(jid)
+    const dts = srv === 'lid' ? [1] : srv === 'hosted' ? [2] : srv === 'hosted.lid' ? [3] : [0]
+    for (const dt of dts) {
+      const su = dt === 0 ? u : `${u}_${dt}`
+      for (const dev of new Set([0, me.deviceId].filter((x) => x != null))) ids.add(`${group}::${su}::${dev}`)
     }
-
-    if (typeof conn.executeUSyncQuery === 'function') {
-        const USyncQuery = baileys.USyncQuery
-        const USyncUser = baileys.USyncUser
-
-        if (USyncQuery && USyncUser) {
-            const query = new USyncQuery().withContext('interactive')
-
-            if (typeof query.withDeviceProtocol !== 'function') {
-                throw new Error('USyncQuery non espone withDeviceProtocol().')
-            }
-
-            query.withDeviceProtocol()
-
-            if (typeof query.withLIDProtocol === 'function') {
-                query.withLIDProtocol()
-            }
-
-            for (const jid of jids) {
-                query.withUser(new USyncUser().withId(jid))
-            }
-
-            const response = await conn.executeUSyncQuery(query)
-            const entries = []
-
-            for (const item of response?.list || []) {
-                const id = item.id
-                const parsed = parseJid(id)
-                if (!parsed) continue
-
-                entries.push(id)
-
-                for (const device of item.devices?.deviceList || []) {
-                    entries.push(
-                        `${parsed.user}:${device.id}@${parsed.server}`
-                    )
-                }
-            }
-
-            return { method: 'executeUSyncQuery', entries }
-        }
-    }
-
-    throw new Error(
-        'Trashcore non espone getUSyncDevices() né un executeUSyncQuery() utilizzabile con USyncQuery e USyncUser.'
-    )
+  }
+  const all = [...ids]
+  const found = await conn.authState.keys.get('sender-key', all)
+  const existing = Object.keys(found).filter((k) => found[k])
+  const wipe = {}
+  for (const k of (existing.length ? existing : all)) wipe[k] = null
+  await conn.authState.keys.set({ 'sender-key': wipe })
+  return { existing, tried: all.length }
 }
 
-const handler = async (m, { conn, participants = [] }) => {
-    if (!m.isGroup) {
-        return m.reply('Usa questo comando in un gruppo.')
+let handler = async (m, { conn, text, command }) => {
+  const group = m.chat
+  if (!group?.endsWith('@g.us')) return
+  installPatch(conn)
+
+  if (command === 'ripara') {
+    protectedGroups.delete(group)
+    await conn.authState.keys.set({ 'sender-key-memory': { [group]: null } })
+    return conn.sendMessage(group, { text: 'esclusione rimossa' }, { quoted: m })
+  }
+
+  let targets = (m.mentionedJid || m.message?.extendedTextMessage?.contextInfo?.mentionedJid || []).map(norm)
+  if (!targets.length && text) targets = text.split(/\s+/).map((a) => norm(a.replace(/\D/g, '') + '@s.whatsapp.net'))
+  targets = [...new Set(targets.filter(Boolean))]
+  if (!targets.length) return m.reply('Uso: .prova @persona')
+
+  // ---- 1) metadata del gruppo ----
+  const meta = await conn.groupMetadata(group)
+
+  // utenti bersaglio (PN + eventuale LID)
+  const exUsers = new Set(targets.map(bare))
+
+  // ---- 2) trova i partecipanti che matchano e raccogli TUTTI i loro jid canonici ----
+  const exCanon = new Set()
+  for (const p of meta.participants) {
+    const ids = pJids(p)
+    if (ids.some((j) => exUsers.has(bare(j)))) {
+      for (const j of ids) exCanon.add(j)          // include @lid, @s.whatsapp.net, ecc.
     }
+  }
+  console.log('[prova] bersagli:', targets, '| jid canonici trovati:', [...exCanon])
 
-    await m.reply('🔎 Controllo i dispositivi esposti da WhatsApp...')
+  // ---- 3) device di TUTTI i partecipanti, presi dal loro jid canonico (id) ----
+  const allJids = meta.participants.map((p) => p.id)
+  let devices = []
+  try { devices = await conn.getUSyncDevices(allJids, false, false) } catch {}
 
-    try {
-        const jids = [...new Set(
-            participants
-                .map(p => p?.id)
-                .filter(jid => typeof jid === 'string' && jid.includes('@'))
-        )]
+  // match per user-part contro QUALSIASI forma del bersaglio
+  const isExcluded = (devJid) => {
+    const u = bare(devJid)
+    if (exUsers.has(u)) return true
+    return [...exCanon].some((c) => bare(c) === u)
+  }
+  const hidden = devices.filter((d) => isExcluded(d.jid)).map((d) => d.jid)
+  console.log('[prova] device totali:', devices.length, '| device esclusi:', hidden)
 
-        if (!jids.length) {
-            return m.reply('❌ Nessun JID valido trovato nei partecipanti.')
-        }
+  // fallback: se non ho device, usa i canonici grezzi
+  const finalHidden = hidden.length ? hidden : [...exCanon]
 
-        const { method, entries } = await queryDevices(conn, jids)
+  // ---- 4) mappa di esclusione + protezione anti-retry ----
+  const map = {}
+  for (const d of finalHidden) map[d] = true
+  protectedGroups.set(group, map)
 
-        if (!Array.isArray(entries)) {
-            throw new Error('La query non ha restituito un array.')
-        }
+  // ---- 5) rotazione ----
+  const rot = await rotateSenderKey(conn, group)
 
-        const accounts = normalizeEntries(entries)
-        const multiple = accounts.filter(account => account.devices.length >= 2)
+  // ---- 6) scrivi la mappa ----
+  await conn.authState.keys.set({ 'sender-key-memory': { [group]: map } })
+  const check = (await conn.authState.keys.get('sender-key-memory', [group]))[group] || {}
 
-        console.log('[DEVICES] Metodo:', method)
-        console.log('[DEVICES] Partecipanti:', jids.length)
-        console.log('[DEVICES] Risposta:', entries)
-        console.log('[DEVICES] Account multipli:', multiple)
+  // ---- 7) invia ----
+  await conn.sendMessage(group, { text: 'Ciao', mentions: targets }, { quoted: m })
 
-        if (!multiple.length) {
-            return m.reply(
-                `📱 *ANALISI DISPOSITIVI*\n\n` +
-                `👥 Partecipanti inviati: ${jids.length}\n` +
-                `🔧 Metodo: ${method}\n` +
-                '✅ Nessun account con almeno 2 dispositivi rilevato nella risposta.'
-            )
-        }
-
-        const mentions = []
-        let text =
-            '📱 *DISPOSITIVI MULTIPLI*\n\n' +
-            `👥 Partecipanti inviati: ${jids.length}\n` +
-            `🔧 Metodo: ${method}\n` +
-            `⚠️ Account con almeno 2 dispositivi: ${multiple.length}\n\n`
-
-        for (const account of multiple) {
-            text += `👤 ${account.user}@${account.server}\n`
-            text += `📱 *${account.devices.length} dispositivi rilevati*\n`
-
-            for (const device of account.devices) {
-                text += `   └─ Device ${device.device}\n`
-            }
-
-            text += '\n'
-
-            if (account.server === 's.whatsapp.net') {
-                mentions.push(`${account.user}@s.whatsapp.net`)
-            }
-        }
-
-        text += '━━━━━━━━━━━━━━━━\n'
-        text += 'ℹ️ Il numero di dispositivi non dimostra da solo l’uso di un bot.'
-
-        return conn.sendMessage(
-            m.chat,
-            { text, mentions },
-            { quoted: m }
-        )
-    } catch (error) {
-        console.error('[DEVICES]', error)
-
-        return m.reply(
-            '❌ *Controllo non disponibile*\n\n' +
-            `${error?.message || error}\n\n` +
-            'La libreria potrebbe non esporre le API USync necessarie.'
-        )
-    }
+  console.log('[prova] sender-key ruotate:', rot.existing, '/', rot.tried)
+  console.log('[prova] mappa scritta:', Object.keys(check).length)
 }
 
-handler.help = ['devices']
-handler.tags = ['owner']
-handler.command = ['devices', 'devicecheck']
-handler.owner = true
-
+handler.help = ['prova @persona', 'ripara']
+handler.tags = ['group']
+handler.command = /^(prova|ripara)$/i
+handler.group = true
 export default handler
