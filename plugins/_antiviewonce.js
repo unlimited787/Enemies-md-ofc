@@ -1,22 +1,41 @@
-const {downloadContentFromMessage} = (await import('@trashcore/baileys'));
+const { downloadContentFromMessage } = (await import('@trashcore/baileys'));
 
-export async function before(m, {isAdmin, isBotAdmin}) {
+export async function before(m, { isAdmin, isBotAdmin, conn }) {
+  if (!m.chat) return;
+  if (/^[.!#]?vedi/i.test(m.text || '')) return;
+
   const chat = db.data.chats[m.chat];
-  if (/^[.~#/\$,](read)?viewonce/.test(m.text)) return;
   if (!chat?.antiviewonce || chat?.isBanned) return;
-  if (m.mtype == 'viewOnceMessageV2') {
-    const msg = m.message.viewOnceMessageV2.message;
-    const type = Object.keys(msg)[0];
-    const media = await downloadContentFromMessage(msg[type], type == 'imageMessage' ? 'image' : 'video');
+
+  // srotola eventuale ephemeral e prendi il wrapper view-once qualunque sia la variante
+  const root = m.message?.ephemeralMessage?.message || m.message;
+  const wrapper = root?.viewOnceMessageV2
+    || root?.viewOnceMessageV2Extension
+    || root?.viewOnceMessage;
+  if (!wrapper) return;
+
+  const msg = wrapper.message;
+  const type = Object.keys(msg || {}).find(k =>
+    /^(imageMessage|videoMessage|audioMessage)$/.test(k)
+  );
+  if (!type) return;
+
+  const mediaType = type === 'imageMessage' ? 'image'
+                  : type === 'videoMessage' ? 'video'
+                  : 'audio';
+
+  try {
+    const stream = await downloadContentFromMessage(msg[type], mediaType);
     let buffer = Buffer.from([]);
-    for await (const chunk of media) {
-      buffer = Buffer.concat([buffer, chunk]);
-    }
-    const cap = 'non si nasconde niente!'
-    if (/video/.test(type)) {
-      return mconn.conn.sendFile(m.chat, buffer, 'error.mp4', `${msg[type].caption ? msg[type].caption + '\n\n' + cap : cap}`, m);
-    } else if (/image/.test(type)) {
-      return mconn.conn.sendFile(m.chat, buffer, 'error.jpg', `${msg[type].caption ? msg[type].caption + '\n\n' + cap : cap}`, m);
-    }
+    for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);
+    if (!buffer.length) return;
+
+    const cap = 'non si nasconde niente!';
+    const caption = msg[type].caption ? `${msg[type].caption}\n\n${cap}` : cap;
+    const ext = mediaType === 'image' ? 'jpg' : mediaType === 'video' ? 'mp4' : 'ogg';
+
+    return conn.sendFile(m.chat, buffer, `error.${ext}`, caption, m);
+  } catch (e) {
+    console.error('ANTIVIEWONCE:', e);
   }
 }
