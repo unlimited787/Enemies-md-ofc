@@ -614,7 +614,7 @@ autosticker: false,
 audios: false,
 
 antiporno: false,
-antioneview: false,
+antiviewonce: false,
 
 autolevelup: false,
 antibot: false,
