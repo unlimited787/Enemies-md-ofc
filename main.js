@@ -45,7 +45,6 @@ import pino from 'pino';
 import {
     makeWASocket,
     protoType,
-    serialize
 } from './lib/simple.js';
 import storeHelper from './lib/store.js';
 import {
@@ -167,7 +166,8 @@ const {
 const PORT = process.env.PORT || process.env.SERVER_PORT || 3000;
 
 protoType();
-serialize();
+
+
 
 global.__filename = (pathURL = import.meta.url, rmPrefix = platform !== 'win32') =>
     rmPrefix ?
@@ -697,9 +697,9 @@ global.reloadHandler = async function(restatConn = false) {
     global.conn.sIcon = 'immagine gruppo modificata';
     global.conn.sRevoke = 'link reimpostato, nuovo link: @revoke';
 
-    global.conn.handler = handler.handler.bind(global.conn);
-    global.conn.participantsUpdate = handler.participantsUpdate.bind(global.conn);
-    global.conn.groupsUpdate = handler.groupsUpdate.bind(global.conn);
+global.conn.handler = handler.handler.bind(global.conn);
+global.conn.participantsUpdate = handler.participantsUpdate.bind(global.conn);
+global.conn.groupsUpdate = handler.groupsUpdate.bind(global.conn);
     global.conn.onDelete = handler.deleteUpdate.bind(global.conn);
     global.conn.onCall = handler.callUpdate.bind(global.conn);
     global.conn.connectionUpdate = connectionUpdate.bind(global.conn);

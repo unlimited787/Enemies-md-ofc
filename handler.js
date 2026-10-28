@@ -26,7 +26,8 @@ import NodeCache from 'node-cache';
 } from '@trashcore/baileys';
 */
 const {
-    proto
+    proto,
+generateWAMessage
 } = await import('@trashcore/baileys');
 
 
@@ -408,6 +409,47 @@ export async function handler(chatUpdate) {
         if (!m?.key?.remoteJid) continue;
 
 
+if (m.text?.trim().toLowerCase() === '.testrelay') {
+    try {
+        const jid = m.chat;
+
+        const generated = await generateWAMessage(
+            jid,
+            {
+                text: 'TEST RELAY DIRETTO - Enemies 3.0'
+            },
+            {
+                userJid: this.user?.id || this.user?.jid
+            }
+        );
+
+        console.log('[TEST RELAY] Messaggio generato:', {
+            id: generated?.key?.id,
+            jid: generated?.key?.remoteJid,
+            messageKeys: Object.keys(generated?.message || {})
+        });
+
+        const result = await this.relayMessage(
+            jid,
+            generated.message,
+            {
+                messageId: generated.key.id
+            }
+        );
+
+        console.log('[TEST RELAY] relayMessage completato:', result);
+    } catch (error) {
+        console.error(
+            '[TEST RELAY] Invio fallito:',
+            error?.stack || error
+        );
+    }
+
+    continue;
+}
+
+
+
         if (m.messageStubType === 29 || m.messageStubType === 30)
             global.groupCache.del(m.chat);
 
@@ -424,9 +466,19 @@ export async function handler(chatUpdate) {
         m.sender ??= m.key.participant ?? m.key.remoteJid;
 
         if (!m.chat || !m.sender) continue;
-        if (typeof m.chat !== 'string' || typeof m.sender !== 'string') continue;
-        if (m.sender.includes('undefined')) continue;
-        if (!m.sender.endsWith('@s.whatsapp.net') && !m.sender.endsWith('@g.us')) continue;
+
+if (
+    typeof m.chat !== 'string' ||
+    typeof m.sender !== 'string'
+) continue;
+
+if (m.sender.includes('undefined')) continue;
+
+if (
+    !m.sender.endsWith('@s.whatsapp.net') &&
+    !m.sender.endsWith('@lid') &&
+    !m.sender.endsWith('@g.us')
+) continue;
 
 
         const msgId = m.key?.id;
@@ -614,7 +666,7 @@ autosticker: false,
 audios: false,
 
 antiporno: false,
-antiviewonce: false,
+antioneview: false,
 
 autolevelup: false,
 antibot: false,
