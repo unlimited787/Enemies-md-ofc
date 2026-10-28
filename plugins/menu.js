@@ -19,7 +19,7 @@ let neww = performance.now()
 let speed = neww - old
 let info = `
 
-✦✧ 𝐄ИΞM𝕀Ξ𝐒 𝐁Ꮻ𝐓 2.0 ✧✦
+✦✧ 𝐄ИΞM𝕀Ξ𝐒 𝐁Ꮻ𝐓 2.1 ✧✦
 
 ┌──⭓ 𝐆𝐑𝐔𝐏𝐏𝐎 🛡
 │⭔ ${usedPrefix}kick / addio / ban @
@@ -41,6 +41,8 @@ let info = `
 │⭔ ${usedPrefix}setbenvenuto (@user txt)
 │⭔ ${usedPrefix}setaddio (@user txt)
 │⭔ ${usedPrefix}admin
+│⭔ ${usedPrefix}devices
+│⭔ ${usedPrefix}reqdevices
 │⭔ ${usedPrefix}ping
 │⭔ ${usedPrefix}menu
 └───────⭓
@@ -122,6 +124,7 @@ let info = `
 │⭔ ${usedPrefix}quiz
 │⭔ ${usedPrefix}bandiera
 │⭔ ${usedPrefix}impiccato
+│⭔ ${usedPrefix}sfera (domanda)
 │⭔ ${usedPrefix}calc (1+1)
 └───────⭓
 
@@ -144,7 +147,6 @@ let info = `
 │⭔ ${usedPrefix}ds
 │⭔ ${usedPrefix}creagruppo (nome)
 │⭔ ${usedPrefix}nuke
-│⭔ ${usedPrefix}spamgp (link)
 │⭔ ${usedPrefix}blocklist
 │⭔ ${usedPrefix}banlist
 │⭔ ${usedPrefix}banchat
@@ -158,7 +160,7 @@ let info = `
 │⭔ ${usedPrefix}aggiornamento
 └───────⭓
 
-✦✧ 𝐄ИΞM𝕀Ξ𝐒 𝐁Ꮻ𝐓 2.0 ✧✦
+✦✧ 𝐄ИΞM𝕀Ξ𝐒 𝐁Ꮻ𝐓 2.1 ✧✦
 `.trim() 
 conn.reply(m.chat, info, m)
 let frocio = /chat.whatsapp.com\/([0-9A-Za-z]{20,24})/i
