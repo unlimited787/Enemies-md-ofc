@@ -1,4 +1,4 @@
-import baileys from '@zervonex/baileys'
+import baileys from '@trashcore/baileys'
 
 function parseJid(jid) {
     if (typeof jid !== 'string') return null
