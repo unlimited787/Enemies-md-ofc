@@ -1,152 +1,114 @@
 import { generateWAMessageFromContent } from '@trashcore/baileys'
-import * as fs from 'fs'
 
-let handler = async (m, { conn, text, participants }) => {
-    try {
-        let users = participants.map(u => conn.decodeJid(u.id))
-        let htextos = text || '.hidetag'
+const MEDIA_TYPES = new Set([
+    'imageMessage',
+    'videoMessage',
+    'audioMessage',
+    'documentMessage',
+    'stickerMessage'
+])
 
-        if (m.quoted) {
-            let quoted = await m.getQuotedObj()
-            let qType = quoted.mtype
+function isMedia(message) {
+    return Boolean(message && MEDIA_TYPES.has(message.mtype))
+}
 
-            if (quoted.message && quoted.message[qType]) {
-                let content = quoted.message[qType]
+function mediaMime(message) {
+    return message?.mimetype || message?.msg?.mimetype || ''
+}
 
-                if (content.contextInfo) {
-                    content.contextInfo = {
-                        ...content.contextInfo,
-                        mentionedJid: users
-                    }
-                } else {
-                    content.contextInfo = {
-                        mentionedJid: users
-                    }
-                }
+function quotedText(message) {
+    return String(
+        message?.text ||
+        message?.msg?.text ||
+        message?.msg?.conversation ||
+        message?.msg?.caption ||
+        message?.message?.conversation ||
+        message?.message?.extendedTextMessage?.text ||
+        message?.message?.imageMessage?.caption ||
+        message?.message?.videoMessage?.caption ||
+        ''
+    ).trim()
+}
 
-                let msg = generateWAMessageFromContent(
-                    m.chat,
-                    {
-                        [qType]: content
-                    },
-                    {
-                        userJid: conn.user.jid
-                    }
-                )
-
-                await conn.relayMessage(
-                    m.chat,
-                    msg.message,
-                    {
-                        messageId: msg.key.id
-                    }
-                )
-
-                return
-            }
-        }
-
-        let msg = generateWAMessageFromContent(
-            m.chat,
-            {
-                extendedTextMessage: {
-                    text: htextos,
-                    contextInfo: {
-                        mentionedJid: users
-                    }
-                }
-            },
-            {
-                userJid: conn.user.jid
-            }
-        )
-
-        await conn.relayMessage(
-            m.chat,
-            msg.message,
-            {
-                messageId: msg.key.id
-            }
-        )
-
-    } catch {
-
-        let users = participants.map(u => conn.decodeJid(u.id))
-        let quoted = m.quoted ? m.quoted : m
-        let mime = (quoted.msg || quoted).mimetype || ''
-        let isMedia = /image|video|sticker|audio/.test(mime)
-        let more = String.fromCharCode(8206)
-        let masss = more.repeat(850)
-        let htextos = `${text ? text : '.hidetag'}`
-
-        if (isMedia && quoted.mtype === 'imageMessage' && htextos) {
-            let mediax = await quoted.download?.()
-
-            await conn.sendMessage(
-                m.chat,
-                {
-                    image: mediax,
-                    mentions: users,
-                    caption: htextos
-                },
-                { quoted: m }
-            )
-
-        } else if (isMedia && quoted.mtype === 'videoMessage' && htextos) {
-            let mediax = await quoted.download?.()
-
-            await conn.sendMessage(
-                m.chat,
-                {
-                    video: mediax,
-                    mentions: users,
-                    mimetype: 'video/mp4',
-                    caption: htextos
-                },
-                { quoted: m }
-            )
-
-        } else if (isMedia && quoted.mtype === 'audioMessage' && htextos) {
-            let mediax = await quoted.download?.()
-
-            await conn.sendMessage(
-                m.chat,
-                {
-                    audio: mediax,
-                    mentions: users,
-                    mimetype: 'audio/mp4',
-                    fileName: 'Hidetag.mp3'
-                },
-                { quoted: m }
-            )
-
-        } else if (isMedia && quoted.mtype === 'stickerMessage' && htextos) {
-            let mediax = await quoted.download?.()
-
-            await conn.sendMessage(
-                m.chat,
-                {
-                    sticker: mediax,
-                    mentions: users
-                },
-                { quoted: m }
-            )
-
-        } else {
-            await conn.relayMessage(
-                m.chat,
-                {
-                    extendedTextMessage: {
-                        text: `${masss}\n${htextos}\n`,
-                        contextInfo: {
-                            mentionedJid: users
-                        }
-                    }
-                },
-                {}
-            )
-        }
+async function downloadMedia(conn, source) {
+    if (typeof source?.download === 'function') return source.download()
+    if (source?.msg && source?.mtype && typeof conn.downloadM === 'function') {
+        return conn.downloadM(source.msg, source.mtype.replace(/Message$/i, ''))
     }
+    return null
+}
+
+async function sendMediaWithMentions(conn, chat, source, users, caption, quoted) {
+    const data = await downloadMedia(conn, source)
+    if (!data) return false
+
+    const type = source.mtype
+    const mime = mediaMime(source)
+    const base = { mentions: users }
+    const options = { quoted }
+
+    if (type === 'imageMessage') {
+        await conn.sendMessage(chat, { image: data, caption, ...base }, options)
+    } else if (type === 'videoMessage') {
+        await conn.sendMessage(chat, { video: data, caption, mimetype: mime || 'video/mp4', ...base }, options)
+    } else if (type === 'audioMessage') {
+        await conn.sendMessage(chat, { audio: data, mimetype: mime || 'audio/mp4', ptt: Boolean(source.ptt), fileName: source.fileName || 'audio.mp3', ...base }, options)
+    } else if (type === 'documentMessage') {
+        await conn.sendMessage(chat, { document: data, mimetype: mime || 'application/octet-stream', fileName: source.fileName || 'document', caption, ...base }, options)
+    } else if (type === 'stickerMessage') {
+        await conn.sendMessage(chat, { sticker: data, ...base }, options)
+    } else {
+        return false
+    }
+
+    return true
+}
+
+async function relayText(conn, m, users, text) {
+    const msg = generateWAMessageFromContent(
+        m.chat,
+        {
+            extendedTextMessage: {
+                text: text || '.hidetag',
+                contextInfo: { mentionedJid: users }
+            }
+        },
+        { userJid: conn.user.jid }
+    )
+
+    await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id })
+}
+
+const handler = async (m, { conn, text, participants }) => {
+    const users = (participants || [])
+        .map(user => conn.decodeJid(user.id))
+        .filter(Boolean)
+    const caption = typeof text === 'string' ? text.trim() : ''
+
+    // Supporta sia ".tag testo" rispondendo a un media sia ".tag" scritto
+    // direttamente nella caption di una foto/video/audio/documento/sticker.
+    let source = null
+    if (m.quoted) {
+        try {
+            source = await m.getQuotedObj() || m.quoted
+        } catch {
+            source = m.quoted
+        }
+    } else if (isMedia(m)) {
+        source = m
+    }
+
+    if (isMedia(source)) {
+        // Se il comando non ha testo, conserva l'eventuale caption del media quotato.
+        const mediaCaption = caption || quotedText(source)
+        const sent = await sendMediaWithMentions(conn, m.chat, source, users, mediaCaption, m)
+        if (sent) return
+    }
+
+    // Per un quoted testuale il contenuto quotato è il testo da inoltrare con
+    // le menzioni; non bisogna ricadere nel generico ".hidetag".
+    const textToSend = caption || quotedText(source)
+    await relayText(conn, m, users, textToSend)
 }
 
 handler.command = /^(hidetag|notificar|tag)$/i
