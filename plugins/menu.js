@@ -29,7 +29,7 @@ let info = `
 │⭔ ${usedPrefix}listanum +1 
 │⭔ ${usedPrefix}link
 │⭔ ${usedPrefix}reimposta
-│⭔ ${usedPrefix}hidetag (txt) ⚠️
+│⭔ ${usedPrefix}hidetag (txt)
 │⭔ ${usedPrefix}tagall (txt)
 │⭔ ${usedPrefix}inattivi
 │⭔ ${usedPrefix}viainattivi
