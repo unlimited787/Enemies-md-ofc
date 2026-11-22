@@ -115,24 +115,37 @@ function drawCard(game) {
 }
 
 function cardText(card) {
-    return `${card.rank}${card.suit}`
+    return card ? `${card.rank}${card.suit}` : '🂠'
+}
+
+function cardsOf(hand) {
+    return Array.isArray(hand)
+        ? hand
+        : Array.isArray(hand?.cards)
+            ? hand.cards
+            : []
 }
 
 function formatHand(hand, hidden = false) {
-    if (!hand?.length) return '—'
+    const cards = cardsOf(hand)
+
+    if (!cards.length) return '—'
 
     if (hidden) {
-        return `🂠  ${cardText(hand[1])}`
+        return cards.length > 1
+            ? `🂠  ${cardText(cards[1])}`
+            : '🂠'
     }
 
-    return hand.map(cardText).join('  ')
+    return cards.map(cardText).join('  ')
 }
 
 function handValue(hand) {
+    const cards = cardsOf(hand)
     let total = 0
     let aces = 0
 
-    for (const card of hand) {
+    for (const card of cards) {
         total += card.value
 
         if (card.rank === 'A') {
@@ -149,21 +162,23 @@ function handValue(hand) {
 }
 
 function isBlackjack(hand) {
-    return hand.length === 2 && handValue(hand) === 21
+    const cards = cardsOf(hand)
+    return cards.length === 2 && handValue(cards) === 21
 }
 
 function isBust(hand) {
-    return handValue(hand) > 21
+    return handValue(cardsOf(hand)) > 21
 }
 
 function canSplit(hand) {
-    if (hand.length !== 2) return false
+    const cards = cardsOf(hand)
+    if (cards.length !== 2) return false
 
-    return hand[0].rank === hand[1].rank
+    return cards[0].rank === cards[1].rank
 }
 
 function canDouble(hand) {
-    return hand.length === 2
+    return cardsOf(hand).length === 2
 }
 
 function createHand(bet) {
@@ -301,6 +316,49 @@ function parseAmount(value) {
     }
 
     return Math.floor(amount)
+}
+
+function cleanJid(value) {
+    return String(value || '').replace(/:\d+(?=@)/, '')
+}
+
+function sameJid(conn, a, b) {
+    const left = cleanJid(a)
+    const right = cleanJid(b)
+
+    if (!left || !right) return false
+
+    const decode = value => {
+        try {
+            return cleanJid(conn?.decodeJid?.(value) || value)
+        } catch {
+            return cleanJid(value)
+        }
+    }
+
+    return left === right || decode(left) === decode(right)
+}
+
+function resolveRecipient(conn, raw, participants = []) {
+    const requested = cleanJid(raw)
+    if (!requested) return ''
+
+    const participant = participants.find(user => {
+        const aliases = [user?.id, user?.jid, user?.lid, user?.phoneNumber]
+        return aliases.some(alias => sameJid(conn, requested, alias))
+    })
+
+    if (participant) {
+        const preferred = [
+            participant.jid,
+            participant.phoneNumber,
+            participant.id
+        ].find(value => value && !String(value).endsWith('@lid'))
+
+        if (preferred) return cleanJid(conn?.decodeJid?.(preferred) || preferred)
+    }
+
+    return cleanJid(conn?.decodeJid?.(requested) || requested)
 }
 
 /* =========================
@@ -1101,6 +1159,9 @@ function helpText() {
         `💼 *.bj saldo*\n` +
         `Mostra le tue fiches.\n\n` +
 
+        `🎁 *.bj dona 1000 @utente*\n` +
+        `Regala fiches a un altro giocatore.\n\n` +
+
         `🏆 *.bj players*\n` +
         `Mostra i giocatori.\n\n` +
 
@@ -1118,11 +1179,11 @@ function helpText() {
    HANDLER
 ========================= */
 
-let handler = async (m, { conn, args, command }) => {
+let handler = async (m, { conn, args, command, participants }) => {
     if (!m) return
 
     const chat = m.chat
-    const jid = playerId(m)
+    const jid = cleanJid(conn?.decodeJid?.(playerId(m)) || playerId(m))
     const name = playerName(m)
 
     if (!jid) return
@@ -1145,6 +1206,70 @@ let handler = async (m, { conn, args, command }) => {
             `👤 ${name}\n` +
             `🪙 Saldo: *${money(getBalance(jid))}*`,
             m
+        )
+    }
+
+    /* =========================
+       DONA FICHES
+    ========================= */
+
+    if (
+        command === 'bj' &&
+        ['dona', 'dono', 'regala', 'regalo'].includes(sub)
+    ) {
+        const amount = parseAmount(args?.[1])
+        const target = m.mentionedJid?.[0] || m.quoted?.sender
+        const targetJid = resolveRecipient(conn, target, participants)
+
+        if (!targetJid) {
+            return reply(
+                conn,
+                chat,
+                `❌ Tagga il destinatario o rispondi a un suo messaggio.\n\n` +
+                `Esempio: *.bj dona 1000 @utente*`,
+                m
+            )
+        }
+
+        if (sameJid(conn, targetJid, jid)) {
+            return reply(conn, chat, `❌ Non puoi donare fiches a te stesso.`, m)
+        }
+
+        if (amount === null || amount < 1 || amount > MAX_BET) {
+            return reply(
+                conn,
+                chat,
+                `❌ Importo non valido. Inserisci un numero tra *1* e *${money(MAX_BET)}*.`,
+                m
+            )
+        }
+
+        const balance = getBalance(jid)
+
+        if (balance < amount) {
+            return reply(
+                conn,
+                chat,
+                `❌ Non hai abbastanza fiches.\n\n` +
+                `Il tuo saldo: *${money(balance)}*\n` +
+                `Donazione richiesta: *${money(amount)}*`,
+                m
+            )
+        }
+
+        // Risolviamo prima il destinatario; solo dopo modifichiamo i saldi.
+        // In questo modo una menzione LID non può far sparire le fiches.
+        const targetBefore = getBalance(targetJid)
+        setBalance(jid, balance - amount)
+        setBalance(targetJid, targetBefore + amount)
+
+        return conn.reply(
+            chat,
+            `🎁 *DONAZIONE COMPLETATA*\n\n` +
+            `@${jid.split('@')[0]} ha regalato *${money(amount)}* a @${targetJid.split('@')[0]}.\n` +
+            `🪙 Saldo donatore: *${money(getBalance(jid))}*`,
+            m,
+            { mentions: [jid, targetJid] }
         )
     }
 
