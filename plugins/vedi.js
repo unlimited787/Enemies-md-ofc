@@ -1,45 +1,57 @@
-import baileys from '@trashcore/baileys'
 
-const { downloadContentFromMessage } = baileys
+import * as baileys from '@trashcore/baileys'
+
+const downloadContentFromMessage =
+    baileys.downloadContentFromMessage ||
+    baileys.default?.downloadContentFromMessage
 
 const handler = async (m, { conn }) => {
     if (!m.quoted) throw '*Rispondi a un messaggio View Once.*'
 
+    if (typeof downloadContentFromMessage !== 'function') {
+        throw '*downloadContentFromMessage non è disponibile nella versione di Baileys installata.*'
+    }
+
     try {
-        let msg = m.quoted.message || m.quoted
+        let msg = m.quoted.message || m.quoted.msg || m.quoted
 
-        if (msg.viewOnceMessage) {
-            msg = msg.viewOnceMessage.message
+        // Rimuove i wrapper dei messaggi
+        const wrappers = [
+            'viewOnceMessage',
+            'viewOnceMessageV2',
+            'viewOnceMessageV2Extension',
+            'ephemeralMessage',
+            'documentWithCaptionMessage'
+        ]
+
+        let attempts = 0
+
+        while (msg && attempts++ < 10) {
+            const wrapper = wrappers.find(key => msg[key]?.message)
+
+            if (!wrapper) break
+
+            msg = msg[wrapper].message
         }
 
-        if (msg.viewOnceMessageV2) {
-            msg = msg.viewOnceMessageV2.message
-        }
-
-        if (msg.viewOnceMessageV2Extension) {
-            msg = msg.viewOnceMessageV2Extension.message
-        }
-
-        let type = Object.keys(msg || {}).find(k =>
-            /^(imageMessage|videoMessage|audioMessage)$/.test(k)
+        // Individua il media
+        const type = Object.keys(msg || {}).find(key =>
+            ['imageMessage', 'videoMessage', 'audioMessage'].includes(key)
         )
 
         if (!type) {
-            throw '*Il messaggio citato non contiene un media View Once supportato.*'
+            throw new Error('Nessun media compatibile trovato nel messaggio citato.')
         }
 
         const media = msg[type]
 
-        let mediaType
+        const mediaType = {
+            imageMessage: 'image',
+            videoMessage: 'video',
+            audioMessage: 'audio'
+        }[type]
 
-        if (type === 'imageMessage') {
-            mediaType = 'image'
-        } else if (type === 'videoMessage') {
-            mediaType = 'video'
-        } else {
-            mediaType = 'audio'
-        }
-
+        // Scarica il contenuto
         const stream = await downloadContentFromMessage(media, mediaType)
 
         const chunks = []
@@ -51,48 +63,39 @@ const handler = async (m, { conn }) => {
         const buffer = Buffer.concat(chunks)
 
         if (!buffer.length) {
-            throw '*Il file scaricato è vuoto.*'
+            throw new Error('Il buffer scaricato è vuoto.')
         }
 
         const caption = media.caption || ''
 
-        if (type === 'imageMessage') {
-            await conn.sendMessage(
-                m.chat,
-                {
+        // Invia nuovamente il contenuto
+        switch (type) {
+            case 'imageMessage':
+                await conn.sendMessage(m.chat, {
                     image: buffer,
                     caption
-                },
-                { quoted: m }
-            )
-        }
+                }, { quoted: m })
+                break
 
-        if (type === 'videoMessage') {
-            await conn.sendMessage(
-                m.chat,
-                {
+            case 'videoMessage':
+                await conn.sendMessage(m.chat, {
                     video: buffer,
                     caption
-                },
-                { quoted: m }
-            )
-        }
+                }, { quoted: m })
+                break
 
-        if (type === 'audioMessage') {
-            await conn.sendMessage(
-                m.chat,
-                {
+            case 'audioMessage':
+                await conn.sendMessage(m.chat, {
                     audio: buffer,
                     mimetype: media.mimetype || 'audio/ogg; codecs=opus',
                     ptt: media.ptt || false
-                },
-                { quoted: m }
-            )
+                }, { quoted: m })
+                break
         }
 
     } catch (e) {
-        console.error('READ VIEW ONCE:', e)
-        throw '*Non è stato possibile estrarre il View Once.*'
+        console.error('[READ VIEW ONCE ERROR]', e)
+        throw '*Non è stato possibile estrarre il View Once. Controlla i log per maggiori dettagli.*'
     }
 }
 
