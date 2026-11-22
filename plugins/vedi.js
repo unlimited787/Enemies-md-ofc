@@ -1,10 +1,37 @@
 
 import crypto from 'node:crypto'
 
-const HKDF_INFO = {
+const MEDIA_TYPES = {
     imageMessage: 'WhatsApp Image Keys',
     videoMessage: 'WhatsApp Video Keys',
     audioMessage: 'WhatsApp Audio Keys'
+}
+
+function findMedia(root) {
+    const visited = new Set()
+
+    function walk(value, depth = 0) {
+        if (!value || typeof value !== 'object' || depth > 15 || visited.has(value)) {
+            return null
+        }
+
+        visited.add(value)
+
+        for (const [key, child] of Object.entries(value)) {
+            if (MEDIA_TYPES[key] && child && typeof child === 'object') {
+                return { type: key, media: child }
+            }
+        }
+
+        for (const child of Object.values(value)) {
+            const result = walk(child, depth + 1)
+            if (result) return result
+        }
+
+        return null
+    }
+
+    return walk(root)
 }
 
 function deriveKeys(mediaKey, info) {
@@ -25,44 +52,11 @@ function deriveKeys(mediaKey, info) {
     }
 }
 
-function unwrapMessage(message) {
-    const wrappers = [
-        'ephemeralMessage',
-        'viewOnceMessage',
-        'viewOnceMessageV2',
-        'viewOnceMessageV2Extension',
-        'documentWithCaptionMessage'
-    ]
-
-    let msg = message
-    let attempts = 0
-
-    while (msg && attempts++ < 10) {
-        const wrapper = wrappers.find(key =>
-            msg[key]?.message
-        )
-
-        if (!wrapper) break
-
-        msg = msg[wrapper].message
+async function decryptMedia(media, type) {
+    if (!media.mediaKey) {
+        throw new Error('MediaKey non presente nel media individuato')
     }
 
-    return msg
-}
-
-function getMediaUrl(media) {
-    if (media.url) {
-        return media.url
-    }
-
-    if (media.directPath) {
-        return `https://mmg.whatsapp.net${media.directPath}`
-    }
-
-    throw new Error('URL e directPath non disponibili')
-}
-
-async function downloadAndDecrypt(media, type) {
     const mediaKey = Buffer.from(media.mediaKey)
 
     if (mediaKey.length !== 32) {
@@ -71,47 +65,31 @@ async function downloadAndDecrypt(media, type) {
 
     const { iv, cipherKey, macKey } = deriveKeys(
         mediaKey,
-        HKDF_INFO[type]
+        MEDIA_TYPES[type]
     )
 
-    const url = getMediaUrl(media)
+    const url = media.url ||
+        (media.directPath
+            ? `https://mmg.whatsapp.net${media.directPath}`
+            : null)
 
-    const response = await fetch(url, {
-        method: 'GET',
-        redirect: 'follow'
-    })
+    if (!url) throw new Error('URL del media non disponibile')
+
+    const response = await fetch(url)
 
     if (!response.ok) {
-        throw new Error(`Download HTTP fallito: ${response.status}`)
+        throw new Error(`Errore HTTP ${response.status}`)
     }
 
     const encrypted = Buffer.from(await response.arrayBuffer())
 
     if (encrypted.length <= 10) {
-        throw new Error('Contenuto cifrato troppo piccolo')
+        throw new Error('Media cifrato non valido')
     }
 
-    // Verifica hash del contenuto cifrato
-    if (media.fileEncSha256) {
-        const expectedHash = Buffer.from(media.fileEncSha256)
-        const actualHash = crypto
-            .createHash('sha256')
-            .update(encrypted)
-            .digest()
-
-        if (
-            expectedHash.length !== actualHash.length ||
-            !crypto.timingSafeEqual(expectedHash, actualHash)
-        ) {
-            throw new Error('Hash del media cifrato non valido')
-        }
-    }
-
-    // Separazione del MAC dagli ultimi 10 byte
     const ciphertext = encrypted.subarray(0, -10)
     const receivedMac = encrypted.subarray(-10)
 
-    // Verifica HMAC-SHA256
     const calculatedMac = crypto
         .createHmac('sha256', macKey)
         .update(iv)
@@ -120,38 +98,33 @@ async function downloadAndDecrypt(media, type) {
         .subarray(0, 10)
 
     if (!crypto.timingSafeEqual(receivedMac, calculatedMac)) {
-        throw new Error('Autenticazione HMAC fallita')
+        throw new Error('Verifica HMAC fallita')
     }
 
-    // Decifratura AES-256-CBC
     const decipher = crypto.createDecipheriv(
         'aes-256-cbc',
         cipherKey,
         iv
     )
 
-    const decrypted = Buffer.concat([
+    const buffer = Buffer.concat([
         decipher.update(ciphertext),
         decipher.final()
     ])
 
-    // Verifica hash del file originale
     if (media.fileSha256) {
-        const expectedHash = Buffer.from(media.fileSha256)
-        const actualHash = crypto
-            .createHash('sha256')
-            .update(decrypted)
-            .digest()
+        const hash = crypto.createHash('sha256').update(buffer).digest()
+        const expected = Buffer.from(media.fileSha256)
 
         if (
-            expectedHash.length !== actualHash.length ||
-            !crypto.timingSafeEqual(expectedHash, actualHash)
+            expected.length !== hash.length ||
+            !crypto.timingSafeEqual(hash, expected)
         ) {
-            throw new Error('Hash del file originale non valido')
+            throw new Error('Verifica SHA256 fallita')
         }
     }
 
-    return decrypted
+    return buffer
 }
 
 const handler = async (m, { conn }) => {
@@ -160,58 +133,41 @@ const handler = async (m, { conn }) => {
     }
 
     try {
-        const msg = unwrapMessage(
-            m.quoted.message ||
-            m.quoted.msg ||
-            m.quoted
-        )
+        const source = m.quoted.message || m.quoted.msg || m.quoted
 
-        const type = Object.keys(msg || {}).find(key =>
-            Object.hasOwn(HKDF_INFO, key)
-        )
+        const found = findMedia(source)
 
-        if (!type) {
-            throw new Error('Nessun media supportato trovato')
+        if (!found) {
+            throw new Error('Nessuna immagine, video o audio trovato')
         }
 
-        const media = msg[type]
+        const { type, media } = found
 
-        if (!media.mediaKey) {
-            throw new Error('MediaKey assente')
-        }
-
-        const buffer = await downloadAndDecrypt(media, type)
+        const buffer = await decryptMedia(media, type)
 
         const caption = media.caption || ''
 
-        switch (type) {
-            case 'imageMessage':
-                await conn.sendMessage(m.chat, {
-                    image: buffer,
-                    caption
-                }, { quoted: m })
-                break
-
-            case 'videoMessage':
-                await conn.sendMessage(m.chat, {
-                    video: buffer,
-                    caption
-                }, { quoted: m })
-                break
-
-            case 'audioMessage':
-                await conn.sendMessage(m.chat, {
-                    audio: buffer,
-                    mimetype: media.mimetype || 'audio/ogg; codecs=opus',
-                    ptt: Boolean(media.ptt)
-                }, { quoted: m })
-                break
+        if (type === 'imageMessage') {
+            await conn.sendMessage(m.chat, {
+                image: buffer,
+                caption
+            }, { quoted: m })
+        } else if (type === 'videoMessage') {
+            await conn.sendMessage(m.chat, {
+                video: buffer,
+                caption
+            }, { quoted: m })
+        } else {
+            await conn.sendMessage(m.chat, {
+                audio: buffer,
+                mimetype: media.mimetype || 'audio/ogg; codecs=opus',
+                ptt: Boolean(media.ptt)
+            }, { quoted: m })
         }
 
-    } catch (e) {
-        console.error('[READ VIEW ONCE]', e)
-
-        throw `*Errore durante l'estrazione:*\n${e.message}`
+    } catch (error) {
+        console.error('[READ VIEW ONCE]', error)
+        throw `*Estrazione View Once fallita:*\n${error.message}`
     }
 }
 
